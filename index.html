@@ -556,7 +556,8 @@
 <script type="module">
 import { initializeApp }                                       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup,
-         onAuthStateChanged, signOut, deleteUser }             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+         onAuthStateChanged, signOut, deleteUser,
+         browserLocalPersistence, setPersistence }             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, setDoc,
          deleteDoc }                                           from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -576,6 +577,10 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const auth  = getAuth(fbApp);
 const fdb   = getFirestore(fbApp);
+
+// Force localStorage persistence so session survives across browser sessions
+// (Firebase defaults to IndexedDB which mobile browsers, especially Safari, clear aggressively)
+await setPersistence(auth, browserLocalPersistence);
 
 let currentUid = null;
 
