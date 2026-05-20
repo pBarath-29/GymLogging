@@ -30,6 +30,7 @@
       --radius: 14px;
       --header-h: 58px;
       --tabs-h: 76px;
+      --nav-h: 58px;
     }
 
     html, body {
@@ -173,7 +174,7 @@
     main {
       position: fixed;
       top: calc(var(--header-h) + var(--tabs-h));
-      left: 0; right: 0; bottom: 0;
+      left: 0; right: 0; bottom: var(--nav-h);
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       padding: 16px 14px 100px;
@@ -318,7 +319,7 @@
     .empty p  { font-size: 14px; line-height: 1.6; }
 
     /* ── Timer FAB ── */
-    .fab-wrap { position: fixed; bottom: 28px; right: 20px; z-index: 200; }
+    .fab-wrap { position: fixed; bottom: calc(var(--nav-h) + 20px); right: 20px; z-index: 200; }
     .fab {
       width: 64px; height: 64px; border-radius: 50%; background: var(--accent); border: none;
       cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -428,6 +429,79 @@
     }
     .copy-week-btn:active { background: rgba(249,115,22,0.12); }
 
+    /* ── Bottom Navigation ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h);
+      background: var(--surface); border-top: 1px solid #222;
+      display: flex; z-index: 150;
+    }
+    .bnav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 3px; background: none; border: none;
+      color: var(--text-muted); cursor: pointer; font-family: inherit;
+      -webkit-tap-highlight-color: transparent; transition: color 0.15s;
+    }
+    .bnav-btn.active { color: var(--accent); }
+    .bnav-btn:active { opacity: 0.7; }
+    .bnav-icon  { font-size: 20px; line-height: 1; }
+    .bnav-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Progress View ── */
+    #progressView {
+      position: fixed; top: var(--header-h); left: 0; right: 0; bottom: var(--nav-h);
+      overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+      padding: 16px 14px 24px; display: none; background: var(--bg);
+    }
+    #progressView.active { display: block; }
+    .prog-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+    }
+    .prog-title { font-size: 24px; font-weight: 700; }
+    .add-photo-btn {
+      background: var(--accent); color: #fff; border-radius: 20px;
+      padding: 8px 18px; font-size: 13px; font-weight: 700; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; user-select: none;
+    }
+    .add-photo-btn:active { opacity: 0.8; }
+    .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .photo-card {
+      position: relative; border-radius: 12px; overflow: hidden;
+      background: var(--surface); aspect-ratio: 3/4;
+    }
+    .photo-card img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: pointer; }
+    .photo-date {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.75));
+      color: #fff; font-size: 11px; font-weight: 600; padding: 24px 8px 8px;
+      pointer-events: none;
+    }
+    .photo-del {
+      position: absolute; top: 6px; right: 6px;
+      background: rgba(0,0,0,0.55); border: none; color: #fff;
+      width: 26px; height: 26px; border-radius: 50%; font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .prog-empty { text-align: center; padding: 60px 24px 24px; color: var(--text-muted); }
+    .prog-empty .empty-icon { font-size: 52px; margin-bottom: 12px; }
+    .prog-empty h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; font-weight: 600; }
+    .prog-empty p  { font-size: 14px; line-height: 1.6; }
+
+    /* ── Photo Viewer ── */
+    .photo-viewer {
+      display: none; position: fixed; inset: 0; background: #000; z-index: 500;
+      flex-direction: column; align-items: center; justify-content: center;
+    }
+    .photo-viewer.open { display: flex; }
+    .photo-viewer img { max-width: 100%; max-height: 82vh; object-fit: contain; }
+    .viewer-close {
+      position: absolute; top: 16px; right: 16px; width: 36px; height: 36px;
+      background: rgba(255,255,255,0.15); border: none; color: #fff; border-radius: 50%;
+      font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .viewer-date { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 14px; font-weight: 500; }
+
     /* ── Set delete (edit mode — tap set# to remove) ── */
     .set-del {
       color: #ef4444 !important; font-size: 17px !important; font-weight: 700;
@@ -509,6 +583,40 @@
     </div>
   </div>
 
+<!-- ── Progress View ── -->
+<div id="progressView">
+  <div class="prog-header">
+    <h2 class="prog-title">Progress</h2>
+    <label class="add-photo-btn" for="photoInput">+ Add Photo</label>
+    <input type="file" id="photoInput" accept="image/*" style="display:none">
+  </div>
+  <div class="photo-grid" id="photoGrid"></div>
+  <div class="prog-empty" id="progEmpty">
+    <div class="empty-icon">📷</div>
+    <h3>No photos yet</h3>
+    <p>Tap "Add Photo" to start<br>tracking your progress.</p>
+  </div>
+</div>
+
+<!-- ── Photo Viewer ── -->
+<div class="photo-viewer" id="photoViewer">
+  <button class="viewer-close" id="viewerClose">✕</button>
+  <img id="viewerImg" src="" alt="">
+  <div class="viewer-date" id="viewerDate"></div>
+</div>
+
+<!-- ── Bottom Navigation ── -->
+<div class="bottom-nav">
+  <button class="bnav-btn active" id="bnavWorkout">
+    <span class="bnav-icon">🏋️</span>
+    <span class="bnav-label">Workout</span>
+  </button>
+  <button class="bnav-btn" id="bnavProgress">
+    <span class="bnav-icon">📷</span>
+    <span class="bnav-label">Progress</span>
+  </button>
+</div>
+
 <!-- ── Settings Page ── -->
 <div class="settings-overlay" id="settingsOverlay">
   <div class="settings-header">
@@ -546,6 +654,8 @@ import { getAuth, GoogleAuthProvider, signInWithPopup,
          browserLocalPersistence, setPersistence }             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, setDoc,
          deleteDoc }                                           from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL,
+         deleteObject }                                        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
 // ─────────────────────────────────────────
 //  FIREBASE INIT
@@ -560,9 +670,10 @@ const firebaseConfig = {
   measurementId:     'G-XGJPYY8VJL'
 };
 
-const fbApp = initializeApp(firebaseConfig);
-const auth  = getAuth(fbApp);
-const fdb   = getFirestore(fbApp);
+const fbApp   = initializeApp(firebaseConfig);
+const auth    = getAuth(fbApp);
+const fdb     = getFirestore(fbApp);
+const storage = getStorage(fbApp);
 
 // Force localStorage persistence so session survives across browser sessions
 // (Firebase defaults to IndexedDB which mobile browsers, especially Safari, clear aggressively)
@@ -644,6 +755,7 @@ onAuthStateChanged(auth, async (user) => {
     hide('appRoot');
 
     await loadFromFirestore();
+    await loadPhotos();
 
     const avatar = document.getElementById('userAvatar');
     if (user.photoURL) {
@@ -1172,6 +1284,104 @@ const closeOverlay = () => document.getElementById('overlay').classList.remove('
 document.getElementById('fabBtn').addEventListener('click', () => document.getElementById('overlay').classList.add('open'));
 document.getElementById('overlay').addEventListener('click', e => { if (e.target===document.getElementById('overlay')) closeOverlay(); });
 document.getElementById('sheetClose').addEventListener('click', closeOverlay);
+
+// ─────────────────────────────────────────
+//  PROGRESS PHOTOS
+// ─────────────────────────────────────────
+let photos = [];
+
+function switchTab(tab) {
+  const isWorkout = tab === 'workout';
+  document.getElementById('dayTabs').style.display    = isWorkout ? '' : 'none';
+  document.getElementById('main').style.display       = isWorkout ? '' : 'none';
+  document.getElementById('fabBtn').parentElement.style.display = isWorkout ? '' : 'none';
+  document.getElementById('progressView').classList.toggle('active', !isWorkout);
+  document.getElementById('bnavWorkout').classList.toggle('active', isWorkout);
+  document.getElementById('bnavProgress').classList.toggle('active', !isWorkout);
+  if (!isWorkout) renderProgress();
+}
+
+async function loadPhotos() {
+  if (!currentUid) return;
+  try {
+    const snap = await getDocs(collection(fdb, 'users', currentUid, 'photos'));
+    photos = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => b.timestamp - a.timestamp);
+  } catch(_) { photos = []; }
+}
+
+function renderProgress() {
+  const grid  = document.getElementById('photoGrid');
+  const empty = document.getElementById('progEmpty');
+  grid.innerHTML = '';
+  if (photos.length === 0) { empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  photos.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'photo-card';
+    const img = document.createElement('img');
+    img.src = p.url; img.loading = 'lazy';
+    img.addEventListener('click', () => openViewer(p));
+    const date = document.createElement('div');
+    date.className = 'photo-date'; date.textContent = p.dateStr;
+    const del = document.createElement('button');
+    del.className = 'photo-del'; del.textContent = '✕';
+    del.addEventListener('click', async e => {
+      e.stopPropagation();
+      if (!confirm('Delete this photo?')) return;
+      await deletePhoto(p);
+    });
+    card.appendChild(img); card.appendChild(date); card.appendChild(del);
+    grid.appendChild(card);
+  });
+}
+
+async function uploadPhoto(file) {
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { showToast('Photo must be under 10 MB', 'warn'); return; }
+  const toastEl = document.createElement('div');
+  showToast('Uploading…', 'default', 15000);
+  try {
+    const ts = Date.now();
+    const storageRef = sRef(storage, `users/${currentUid}/photos/${ts}`);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    const d = new Date(ts);
+    const dateStr = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+    const meta = { url, timestamp: ts, dateStr };
+    await setDoc(doc(fdb, 'users', currentUid, 'photos', String(ts)), meta);
+    photos.unshift({ id: String(ts), ...meta });
+    renderProgress();
+    showToast('Photo saved!', 'success');
+  } catch(e) {
+    console.error(e);
+    showToast('Upload failed — check your connection', 'error');
+  }
+  document.getElementById('photoInput').value = '';
+}
+
+async function deletePhoto(p) {
+  try {
+    try { await deleteObject(sRef(storage, `users/${currentUid}/photos/${p.id}`)); } catch(_) {}
+    await deleteDoc(doc(fdb, 'users', currentUid, 'photos', p.id));
+    photos = photos.filter(x => x.id !== p.id);
+    renderProgress();
+    showToast('Photo deleted', 'success');
+  } catch(e) {
+    showToast('Delete failed — try again', 'error');
+  }
+}
+
+function openViewer(p) {
+  document.getElementById('viewerImg').src   = p.url;
+  document.getElementById('viewerDate').textContent = p.dateStr;
+  document.getElementById('photoViewer').classList.add('open');
+}
+
+document.getElementById('photoInput').addEventListener('change', e => uploadPhoto(e.target.files[0]));
+document.getElementById('bnavWorkout').addEventListener('click',  () => switchTab('workout'));
+document.getElementById('bnavProgress').addEventListener('click', () => switchTab('progress'));
+document.getElementById('viewerClose').addEventListener('click',  () => document.getElementById('photoViewer').classList.remove('open'));
 
 refreshTimer();
 </script>
