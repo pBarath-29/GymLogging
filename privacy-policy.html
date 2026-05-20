@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - GymLog</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f0f0f;
+      color: #f1f1f1;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.7;
+    }
+    .page {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      color: #f97316;
+      letter-spacing: -1px;
+      margin-bottom: 40px;
+      display: block;
+      text-decoration: none;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .updated {
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 40px;
+    }
+    h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #f97316;
+      margin-top: 36px;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 15px;
+      color: #ccc;
+      margin-bottom: 14px;
+    }
+    ul {
+      padding-left: 20px;
+      margin-bottom: 14px;
+    }
+    li {
+      font-size: 15px;
+      color: #ccc;
+      margin-bottom: 6px;
+    }
+    a {
+      color: #f97316;
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+    .divider {
+      border: none;
+      border-top: 1px solid #222;
+      margin: 36px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <a class="logo" href="/">GymLog</a>
+
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: May 2025</p>
+
+    <p>GymLog is a personal workout tracking app. This policy explains what data we collect, how it is stored, and how it is used. We keep this simple because the app itself is simple.</p>
+
+    <h2>Who operates this app</h2>
+    <p>GymLog is an independent project hosted on Render. It is not affiliated with Google, Firebase, or Anthropic.</p>
+
+    <h2>What data we collect</h2>
+    <p>When you sign in with Google, we receive the following from your Google account:</p>
+    <ul>
+      <li>Your name</li>
+      <li>Your email address</li>
+      <li>Your Google profile photo URL</li>
+      <li>A unique user ID assigned by Firebase Authentication</li>
+    </ul>
+    <p>This information is used only to identify your account and display your name and avatar inside the app. We do not store your email or name in our database beyond what Firebase Authentication manages.</p>
+
+    <p>The app also stores data that you create while using it:</p>
+    <ul>
+      <li>Workout logs including muscle groups, exercise names, sets, weights, reps, and whether each set was completed</li>
+      <li>Which days you have marked as rest days</li>
+      <li>Progress photos you upload (these are compressed and stored as base64-encoded JPEG images)</li>
+    </ul>
+
+    <h2>How your data is stored</h2>
+    <p>All workout data and photos are stored in Google Firestore under your unique user ID. Each user can only access their own data. We do not have access to read individual users' workout entries during normal operation.</p>
+    <p>Photos are resized to a maximum of 600 pixels on the longest side and compressed before being stored. They are kept inside Firestore documents, not in a separate file storage service.</p>
+
+    <h2>Third-party services</h2>
+    <p>GymLog uses the following third-party services:</p>
+    <ul>
+      <li><strong>Firebase Authentication</strong> (by Google) - handles sign-in with your Google account</li>
+      <li><strong>Google Firestore</strong> - stores your workout data and photos</li>
+      <li><strong>Render</strong> - hosts the app as a static website</li>
+    </ul>
+    <p>Each of these services has its own privacy policy. Firebase and Google services are governed by <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a>.</p>
+
+    <h2>What we do not do</h2>
+    <ul>
+      <li>We do not sell your data to anyone</li>
+      <li>We do not use your data for advertising</li>
+      <li>We do not share your data with any third party beyond the services listed above</li>
+      <li>We do not use analytics or tracking tools</li>
+    </ul>
+
+    <h2>Deleting your data</h2>
+    <p>You can delete your account at any time from inside the app. Go to Settings (tap your profile photo) and select Delete Account. This will permanently remove all your workout data, all your progress photos, and your Firebase Auth account. This action cannot be undone.</p>
+
+    <h2>Data retention</h2>
+    <p>Your data is kept in Firestore for as long as your account exists. If you delete your account, all associated data is deleted immediately.</p>
+
+    <h2>Children</h2>
+    <p>GymLog is not directed at children under the age of 13. We do not knowingly collect data from children.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If we make meaningful changes to this policy, we will update the date at the top of this page. Continued use of the app after changes are posted means you accept the updated policy.</p>
+
+    <h2>Contact</h2>
+    <p>If you have questions about this policy or your data, you can reach us at <a href="mailto:pbarath29@gmail.com">pbarath29@gmail.com</a>.</p>
+
+    <hr class="divider">
+    <p style="font-size:13px; color:#555;">GymLog &mdash; <a href="/">Back to app</a> &middot; <a href="/terms-of-service.html">Terms of Service</a></p>
+  </div>
+</body>
+</html>
