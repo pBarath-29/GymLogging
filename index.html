@@ -762,7 +762,7 @@ function getMonday(d) {
   x.setHours(0,0,0,0); return x;
 }
 function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate()+n); return x; }
-function dateKey(d)    { return d.toISOString().slice(0,10); }
+function dateKey(d)    { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function sameDay(a,b)  { return dateKey(a) === dateKey(b); }
 function fmt(s) {
   const m = Math.floor(Math.abs(s)/60), r = Math.abs(s)%60;
