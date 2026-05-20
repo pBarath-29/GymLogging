@@ -33,9 +33,10 @@
     }
 
     html, body {
-      height: 100%; background: var(--bg); color: var(--text);
+      height: 100%; overflow: hidden;
+      background: var(--bg); color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      -webkit-font-smoothing: antialiased; overscroll-behavior: none;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* ── Auth Screen ── */
@@ -169,7 +170,15 @@
     .day-tab.is-active .d-dot { background: rgba(255,255,255,0.6); }
 
     /* ── Main ── */
-    main { margin-top: calc(var(--header-h) + var(--tabs-h)); padding: 16px 14px 140px; }
+    main {
+      position: fixed;
+      top: calc(var(--header-h) + var(--tabs-h));
+      left: 0; right: 0; bottom: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 16px 14px 100px;
+      overscroll-behavior: contain;
+    }
 
     /* ── Day heading row ── */
     .day-head-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
