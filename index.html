@@ -388,6 +388,26 @@
     }
     .custom-set:active { opacity: 0.85; }
 
+    /* ── Toast notifications ── */
+    .toast-container {
+      position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
+      z-index: 999; display: flex; flex-direction: column; align-items: center;
+      gap: 8px; pointer-events: none; width: 90%; max-width: 340px;
+    }
+    .toast {
+      background: #2a2a2a; color: #f1f1f1; border-radius: 22px; padding: 11px 20px;
+      font-size: 13px; font-weight: 600; opacity: 0; transform: translateY(10px);
+      transition: opacity 0.25s, transform 0.25s; white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4); text-align: center;
+    }
+    .toast.show   { opacity: 1; transform: translateY(0); }
+    .toast.error  { background: #ef4444; }
+    .toast.success{ background: #22c55e; color: #fff; }
+    .toast.warn   { background: #d97706; color: #fff; }
+
+    /* ── Input error state ── */
+    .set-input.input-error { border-color: #ef4444; }
+
     /* ── Previous session hint ── */
     .set-prev-hint {
       display: grid; grid-template-columns: 34px 1fr 1fr 38px;
@@ -567,7 +587,14 @@ document.getElementById('btnGoogle').addEventListener('click', async () => {
   try {
     await signInWithPopup(auth, new GoogleAuthProvider());
   } catch (e) {
-    document.getElementById('authError').textContent = 'Sign-in failed — please try again.';
+    const msgs = {
+      'auth/popup-blocked':           'Popup blocked — please allow popups for this site.',
+      'auth/network-request-failed':  'No internet connection — check your network.',
+      'auth/cancelled-popup-request': '',  // user dismissed, stay silent
+      'auth/popup-closed-by-user':    '',
+    };
+    document.getElementById('authError').textContent =
+      e.code in msgs ? msgs[e.code] : 'Sign-in failed — please try again.';
   }
 });
 
@@ -593,21 +620,26 @@ document.getElementById('btnSignOut').addEventListener('click', async () => {
 document.getElementById('btnDeleteAccount').addEventListener('click', async () => {
   if (!confirm('This will permanently delete your account and ALL workout data.\n\nThis cannot be undone. Are you sure?')) return;
 
+  const btn = document.getElementById('btnDeleteAccount');
+  btn.textContent = 'Deleting…'; btn.disabled = true;
+
   try {
+    const uid = currentUid;
     // Delete all day documents
-    const snap = await getDocs(collection(fdb, 'users', currentUid, 'days'));
+    const snap = await getDocs(collection(fdb, 'users', uid, 'days'));
     await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
     // Delete the user document itself
-    await deleteDoc(doc(fdb, 'users', currentUid));
+    try { await deleteDoc(doc(fdb, 'users', uid)); } catch(_) {}
     // Delete Firebase Auth account
     await deleteUser(auth.currentUser);
-    // onAuthStateChanged → shows auth screen
     hide('settingsOverlay');
+    // onAuthStateChanged fires → shows auth screen
   } catch (e) {
+    btn.textContent = 'Delete Account'; btn.disabled = false;
     if (e.code === 'auth/requires-recent-login') {
       alert('For security, please sign out and sign back in, then try again.');
     } else {
-      alert('Failed to delete account. Please try again.');
+      showToast('Failed to delete account — please try again', 'error');
       console.error(e);
     }
   }
@@ -648,6 +680,20 @@ onAuthStateChanged(auth, async (user) => {
 function show(id) { document.getElementById(id).style.display = ''; document.getElementById(id).classList.add('visible'); }
 function hide(id) { document.getElementById(id).style.display = 'none'; document.getElementById(id).classList.remove('visible'); }
 
+// ── Toast ──
+function showToast(msg, type = 'default', duration = 3000) {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.getElementById('toastContainer').appendChild(t);
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, duration);
+}
+
+// ── Offline / online ──
+window.addEventListener('offline', () => showToast("You're offline — changes may not save", 'warn', 5000));
+window.addEventListener('online',  () => showToast('Back online', 'success', 2000));
+
 // ─────────────────────────────────────────
 //  FIRESTORE  (data lives in memory as `db`)
 // ─────────────────────────────────────────
@@ -674,6 +720,10 @@ async function loadFromFirestore() {
   } catch (e) {
     console.error('Firestore load failed', e);
     db = {};
+    const msg = !navigator.onLine
+      ? "You're offline — couldn't load workouts"
+      : 'Failed to load workouts — please refresh';
+    setTimeout(() => showToast(msg, 'error', 5000), 600);
   }
   computePrevData();
 }
@@ -683,9 +733,9 @@ function saveDB(key) {
   if (!currentUid) return;
   const dayRef = doc(fdb, 'users', currentUid, 'days', key);
   if (db[key]) {
-    setDoc(dayRef, db[key]).catch(e => console.error('Save failed', e));
+    setDoc(dayRef, db[key]).catch(() => showToast("Couldn't save — check your connection", 'error'));
   } else {
-    deleteDoc(dayRef).catch(e => console.error('Delete failed', e));
+    deleteDoc(dayRef).catch(() => showToast("Couldn't delete — check your connection", 'error'));
   }
   if (key < dateKey(new Date())) computePrevData();
 }
@@ -933,7 +983,7 @@ function buildGroup(key, gi, group) {
 
 function editGroupName(key, gi, el) {
   const inp = elMk('input', 'group-name-input');
-  inp.value = db[key].groups[gi].name || ''; inp.placeholder = 'e.g. Shoulders';
+  inp.value = db[key].groups[gi].name || ''; inp.placeholder = 'e.g. Shoulders'; inp.maxLength = 80;
   el.replaceWith(inp); inp.focus(); inp.select();
   const commit = () => { db[key].groups[gi].name = inp.value.trim() || 'Group'; saveDB(key); render(); };
   inp.addEventListener('blur', commit);
@@ -1005,12 +1055,26 @@ function buildSetRow(key, gi, ei, si, set, exName, totalSets) {
 
   const wInp = document.createElement('input');
   wInp.type='number'; wInp.className='set-input'; wInp.placeholder='kg'; wInp.inputMode='decimal'; wInp.value=set.weight;
-  wInp.addEventListener('input', e => { db[key].groups[gi].exercises[ei].sets[si].weight=e.target.value; saveDB(key); });
+  wInp.addEventListener('input', e => {
+    let v = parseFloat(e.target.value);
+    if (e.target.value === '' || e.target.value === '-') { wInp.classList.add('input-error'); return; }
+    if (isNaN(v) || v < 0) { v = 0; e.target.value = 0; }
+    if (v > 999) { v = 999; e.target.value = 999; }
+    wInp.classList.remove('input-error');
+    db[key].groups[gi].exercises[ei].sets[si].weight = String(v); saveDB(key);
+  });
   row.appendChild(wInp);
 
   const rInp = document.createElement('input');
   rInp.type='number'; rInp.className='set-input'; rInp.placeholder='reps'; rInp.inputMode='numeric'; rInp.value=set.reps;
-  rInp.addEventListener('input', e => { db[key].groups[gi].exercises[ei].sets[si].reps=e.target.value; saveDB(key); });
+  rInp.addEventListener('input', e => {
+    let v = parseInt(e.target.value, 10);
+    if (e.target.value === '' || e.target.value === '-') { rInp.classList.add('input-error'); return; }
+    if (isNaN(v) || v < 0) { v = 0; e.target.value = 0; }
+    if (v > 999) { v = 999; e.target.value = 999; }
+    rInp.classList.remove('input-error');
+    db[key].groups[gi].exercises[ei].sets[si].reps = String(v); saveDB(key);
+  });
   row.appendChild(rInp);
 
   const check = elMk('button', `set-check${set.done?' is-done':''}`, set.done ? '✓' : '');
@@ -1036,7 +1100,7 @@ function buildSetRow(key, gi, ei, si, set, exName, totalSets) {
 
 function editExName(key, gi, ei, el) {
   const inp = elMk('input', 'ex-name-input');
-  inp.value = db[key].groups[gi].exercises[ei].name || ''; inp.placeholder = 'Exercise name';
+  inp.value = db[key].groups[gi].exercises[ei].name || ''; inp.placeholder = 'Exercise name'; inp.maxLength = 80;
   el.replaceWith(inp); inp.focus(); inp.select();
   const commit = () => { db[key].groups[gi].exercises[ei].name = inp.value.trim() || 'Exercise'; saveDB(key); render(); };
   inp.addEventListener('blur', commit);
@@ -1047,7 +1111,11 @@ function editExName(key, gi, ei, el) {
 //  NAVIGATION
 // ─────────────────────────────────────────
 document.getElementById('btnPrev').addEventListener('click', () => { weekStart=addDays(weekStart,-7); editMode=false; render(); });
-document.getElementById('btnNext').addEventListener('click', () => { weekStart=addDays(weekStart,7);  editMode=false; render(); });
+document.getElementById('btnNext').addEventListener('click', () => {
+  const limit = addDays(getMonday(new Date()), 52 * 7);
+  if (weekStart >= limit) { showToast("Can't plan more than a year ahead", 'warn'); return; }
+  weekStart=addDays(weekStart,7); editMode=false; render();
+});
 
 // ─────────────────────────────────────────
 //  TIMER
@@ -1096,9 +1164,11 @@ document.getElementById('btnToggle').addEventListener('click', () => {
 document.getElementById('btnReset').addEventListener('click', () => { clearInterval(T.iv); T.running=false; T.left=T.total; refreshTimer(); });
 document.getElementById('presets').addEventListener('click', e => { const b=e.target.closest('.preset'); if (b) setDuration(+b.dataset.s); });
 document.getElementById('btnCustom').addEventListener('click', () => {
-  const m=Math.max(0,parseInt(document.getElementById('cMin').value)||0);
-  const s=Math.max(0,parseInt(document.getElementById('cSec').value)||0);
-  const total=m*60+s; if (total>0) setDuration(total);
+  const m = Math.min(59, Math.max(0, parseInt(document.getElementById('cMin').value) || 0));
+  const s = Math.min(59, Math.max(0, parseInt(document.getElementById('cSec').value) || 0));
+  const total = m * 60 + s;
+  if (total === 0) { showToast('Enter a time first', 'warn'); return; }
+  setDuration(total);
 });
 function onTimerDone() {
   if (navigator.vibrate) navigator.vibrate([150,80,150,80,300]);
@@ -1121,5 +1191,6 @@ document.getElementById('sheetClose').addEventListener('click', closeOverlay);
 
 refreshTimer();
 </script>
+<div id="toastContainer" class="toast-container"></div>
 </body>
 </html>
