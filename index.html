@@ -387,6 +387,46 @@
       font-family: inherit; -webkit-tap-highlight-color: transparent;
     }
     .custom-set:active { opacity: 0.85; }
+
+    /* ── Previous session hint ── */
+    .set-prev-hint {
+      display: grid; grid-template-columns: 34px 1fr 1fr 38px;
+      gap: 6px; padding: 1px 2px 6px;
+    }
+    .set-prev-hint span { font-size: 11px; color: var(--text-dim); text-align: center; }
+
+    /* ── Set progress badge ── */
+    .set-progress {
+      font-size: 12px; font-weight: 700; color: var(--text-muted);
+      background: var(--surface2); border-radius: 20px; padding: 3px 10px; flex-shrink: 0;
+    }
+    .set-progress.all-done { color: var(--accent); background: rgba(249,115,22,0.12); }
+
+    /* ── Workout complete banner ── */
+    .complete-banner {
+      background: rgba(34,197,94,0.07); border: 1px solid rgba(34,197,94,0.25);
+      border-radius: var(--radius); padding: 20px 18px; margin-bottom: 20px; text-align: center;
+    }
+    .complete-banner .cb-icon { font-size: 38px; margin-bottom: 8px; }
+    .complete-banner h3 { font-size: 19px; font-weight: 700; color: var(--success); margin-bottom: 4px; }
+    .complete-banner p  { font-size: 13px; color: var(--text-muted); }
+
+    /* ── Copy last week button ── */
+    .copy-week-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: rgba(249,115,22,0.05); border: 1.5px solid rgba(249,115,22,0.25);
+      color: var(--accent); border-radius: var(--radius); padding: 14px; font-size: 14px;
+      font-weight: 600; cursor: pointer; width: 100%; margin-top: 12px; font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .copy-week-btn:active { background: rgba(249,115,22,0.12); }
+
+    /* ── Set delete (edit mode — tap set# to remove) ── */
+    .set-del {
+      color: #ef4444 !important; font-size: 17px !important; font-weight: 700;
+      cursor: pointer; background: rgba(239,68,68,0.08); border-radius: 6px;
+    }
+    .set-del:active { background: rgba(239,68,68,0.2); }
   </style>
 </head>
 <body>
@@ -639,6 +679,7 @@ async function loadFromFirestore() {
     console.error('Firestore load failed', e);
     db = {};
   }
+  computePrevData();
 }
 
 // Save a single day to Firestore (fire-and-forget — UI stays instant)
@@ -650,6 +691,7 @@ function saveDB(key) {
   } else {
     deleteDoc(dayRef).catch(e => console.error('Delete failed', e));
   }
+  if (key < dateKey(new Date())) computePrevData();
 }
 
 // ─────────────────────────────────────────
@@ -685,6 +727,48 @@ function elMk(tag, cls, text) {
 let weekStart = getMonday(new Date());
 let dayIdx    = (new Date().getDay() + 6) % 7;
 let editMode  = false;
+let prevData  = {}; // exerciseName.toLowerCase() → sets[] from most recent past session
+
+function computePrevData() {
+  const today = dateKey(new Date());
+  prevData = {};
+  Object.keys(db)
+    .filter(k => k < today && db[k] && !db[k].rest)
+    .sort().reverse()
+    .forEach(k => {
+      for (const g of (db[k].groups || []))
+        for (const ex of (g.exercises || [])) {
+          const name = (ex.name || '').trim().toLowerCase();
+          if (name && !prevData[name]) prevData[name] = ex.sets || [];
+        }
+    });
+}
+
+function isDayComplete(groups) {
+  if (!groups || !groups.length) return false;
+  return groups.every(g =>
+    g.exercises && g.exercises.length &&
+    g.exercises.every(ex => ex.sets && ex.sets.length && ex.sets.every(s => s.done))
+  );
+}
+
+function calcVolume(groups) {
+  let v = 0;
+  for (const g of (groups || []))
+    for (const ex of (g.exercises || []))
+      for (const s of (ex.sets || []))
+        if (s.done) v += (parseFloat(s.weight) || 0) * (parseFloat(s.reps) || 0);
+  return Math.round(v);
+}
+
+function deepCloneGroups(groups) {
+  return JSON.parse(JSON.stringify(groups)).map(g => ({
+    ...g,
+    exercises: (g.exercises || []).map(ex => ({
+      ...ex, sets: (ex.sets || []).map(s => ({ ...s, done: false }))
+    }))
+  }));
+}
 
 // ─────────────────────────────────────────
 //  RENDER
@@ -769,12 +853,36 @@ function renderMain() {
 
   // Groups
   const groups = (day && day.groups) || [];
+
+  // Workout complete banner
+  if (!editMode && isDayComplete(groups)) {
+    const vol = calcVolume(groups);
+    const totalSets = groups.reduce((a, g) => a + (g.exercises||[]).reduce((b, ex) => b + (ex.sets||[]).length, 0), 0);
+    const banner = elMk('div', 'complete-banner');
+    banner.innerHTML = `<div class="cb-icon">💪</div><h3>Workout Complete!</h3><p>${totalSets} sets completed${vol > 0 ? ' · ' + vol.toLocaleString() + ' kg total volume' : ''}</p>`;
+    main.appendChild(banner);
+  }
+
   if (groups.length === 0) {
     const emp = elMk('div', 'empty');
     emp.innerHTML = editMode
       ? `<div class="empty-icon">🏋️</div><h3>No exercises yet</h3><p>Tap below to add your first muscle group.</p>`
       : `<div class="empty-icon">🏋️</div><h3>Nothing planned</h3><p>Tap <strong>Edit</strong> to set up your workout.</p>`;
     main.appendChild(emp);
+
+    // Copy last week button
+    if (!editMode) {
+      const lastWeekKey = dateKey(addDays(d, -7));
+      const lastWeek = db[lastWeekKey];
+      if (lastWeek && !lastWeek.rest && lastWeek.groups && lastWeek.groups.some(g => g.exercises && g.exercises.length)) {
+        const copyBtn = elMk('button', 'copy-week-btn', `↗ Copy from last ${DFULL[dayIdx]}`);
+        copyBtn.addEventListener('click', () => {
+          ensureDay(key).groups = deepCloneGroups(lastWeek.groups);
+          saveDB(key); render();
+        });
+        main.appendChild(copyBtn);
+      }
+    }
   } else {
     groups.forEach((g, gi) => main.appendChild(buildGroup(key, gi, g)));
   }
@@ -856,6 +964,11 @@ function buildCard(key, gi, ei, ex) {
   if (editMode) nameEl.addEventListener('click', () => editExName(key, gi, ei, nameEl));
   hdr.appendChild(nameEl);
 
+  if (!editMode && ex.sets && ex.sets.length > 0) {
+    const done = ex.sets.filter(s => s.done).length, total = ex.sets.length;
+    hdr.appendChild(elMk('span', `set-progress${done===total?' all-done':''}`, `${done}/${total}`));
+  }
+
   if (editMode) {
     const del = elMk('button', 'icon-btn'); del.innerHTML = '🗑';
     del.addEventListener('click', () => {
@@ -872,7 +985,7 @@ function buildCard(key, gi, ei, ex) {
   sh.innerHTML = '<span>Set</span><span>Weight</span><span>Reps</span><span>✓</span>';
   card.appendChild(sh);
 
-  (ex.sets || []).forEach((set, si) => card.appendChild(buildSetRow(key, gi, ei, si, set)));
+  (ex.sets || []).forEach((set, si) => card.appendChild(buildSetRow(key, gi, ei, si, set, ex.name, (ex.sets||[]).length)));
 
   if (editMode) {
     const addSet = elMk('button', 'add-set-btn', '+ Add Set');
@@ -886,10 +999,21 @@ function buildCard(key, gi, ei, ex) {
   return card;
 }
 
-function buildSetRow(key, gi, ei, si, set) {
-  const row = elMk('div', `set-row${set.done?' done-row':''}`);
+function buildSetRow(key, gi, ei, si, set, exName, totalSets) {
+  const wrap = document.createElement('div');
+  const row  = elMk('div', `set-row${set.done?' done-row':''}`);
 
-  const num = elMk('span', 'set-num', String(si + 1));
+  // Set number — becomes delete button in edit mode when >1 sets
+  const num = elMk('span', 'set-num');
+  if (editMode && totalSets > 1) {
+    num.classList.add('set-del'); num.textContent = '×';
+    num.addEventListener('click', () => {
+      db[key].groups[gi].exercises[ei].sets.splice(si, 1);
+      saveDB(key); render();
+    });
+  } else {
+    num.textContent = String(si + 1);
+  }
   row.appendChild(num);
 
   const wInp = document.createElement('input');
@@ -904,11 +1028,27 @@ function buildSetRow(key, gi, ei, si, set) {
 
   const check = elMk('button', `set-check${set.done?' is-done':''}`, set.done ? '✓' : '');
   check.addEventListener('click', () => {
-    db[key].groups[gi].exercises[ei].sets[si].done = !set.done;
-    saveDB(key); render();
+    const nowDone = !set.done;
+    db[key].groups[gi].exercises[ei].sets[si].done = nowDone;
+    saveDB(key);
+    // Auto-start rest timer when a set is ticked done
+    if (nowDone && !T.running && T.left > 0) startTimer();
+    render();
   });
   row.appendChild(check);
-  return row;
+  wrap.appendChild(row);
+
+  // Previous session hint (view mode only)
+  if (!editMode) {
+    const name = (exName || '').trim().toLowerCase();
+    const prev = prevData[name];
+    if (prev && prev[si] && (prev[si].weight || prev[si].reps)) {
+      const hint = elMk('div', 'set-prev-hint');
+      hint.innerHTML = `<span></span><span>${prev[si].weight ? 'prev '+prev[si].weight+'kg' : ''}</span><span>${prev[si].reps ? '×'+prev[si].reps : ''}</span><span></span>`;
+      wrap.appendChild(hint);
+    }
+  }
+  return wrap;
 }
 
 function editExName(key, gi, ei, el) {
@@ -938,6 +1078,16 @@ const elFab     = document.getElementById('fabBtn');
 
 function setDuration(secs) { clearInterval(T.iv); T.running=false; T.total=T.left=secs; refreshTimer(); syncPresets(); }
 
+function startTimer() {
+  if (T.running || T.left <= 0) return;
+  T.running = true;
+  T.iv = setInterval(() => {
+    T.left--; refreshTimer();
+    if (T.left === 0) { clearInterval(T.iv); T.running = false; onTimerDone(); }
+  }, 1000);
+  refreshTimer();
+}
+
 function refreshTimer() {
   elClock.textContent = fmt(T.left);
   elFill.style.width  = (T.total > 0 ? (T.left/T.total)*100 : 100) + '%';
@@ -956,10 +1106,9 @@ function refreshTimer() {
 function syncPresets() { document.querySelectorAll('.preset').forEach(b => b.classList.toggle('sel', +b.dataset.s===T.total)); }
 
 document.getElementById('btnToggle').addEventListener('click', () => {
-  if (T.left===0) { T.left=T.total; T.running=false; clearInterval(T.iv); refreshTimer(); return; }
-  if (T.running) { clearInterval(T.iv); T.running=false; }
-  else { T.running=true; T.iv=setInterval(() => { T.left--; refreshTimer(); if (T.left===0) { clearInterval(T.iv); T.running=false; onTimerDone(); } }, 1000); }
-  refreshTimer();
+  if (T.left === 0) { T.left=T.total; T.running=false; clearInterval(T.iv); refreshTimer(); return; }
+  if (T.running) { clearInterval(T.iv); T.running=false; refreshTimer(); }
+  else { startTimer(); }
 });
 document.getElementById('btnReset').addEventListener('click', () => { clearInterval(T.iv); T.running=false; T.left=T.total; refreshTimer(); });
 document.getElementById('presets').addEventListener('click', e => { const b=e.target.closest('.preset'); if (b) setDuration(+b.dataset.s); });
