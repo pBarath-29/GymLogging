@@ -48,7 +48,7 @@
     }
     .auth-screen.visible { display: flex; }
     .auth-logo { font-size: 40px; font-weight: 800; color: var(--accent); letter-spacing: -2px; margin-bottom: 8px; }
-    .auth-tagline { font-size: 15px; color: var(--text-muted); margin-bottom: 48px; text-align: center; line-height: 1.5; }
+    .auth-tagline { font-size: 15px; color: var(--text-muted); margin-bottom: 36px; text-align: center; line-height: 1.5; }
     .google-btn {
       display: flex; align-items: center; justify-content: center; gap: 12px;
       background: #fff; color: #222; border: none; border-radius: 14px;
@@ -57,12 +57,21 @@
       box-shadow: 0 4px 24px rgba(0,0,0,0.4); transition: opacity 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
-    .google-btn:active { opacity: 0.85; }
+    .google-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+    .google-btn:not(:disabled):active { opacity: 0.85; }
     .google-btn svg { flex-shrink: 0; }
-    .auth-error { margin-top: 16px; font-size: 13px; color: #ef4444; text-align: center; min-height: 20px; }
-    .auth-legal { margin-top: 28px; font-size: 12px; color: var(--text-dim); text-align: center; }
-    .auth-legal a { color: var(--text-muted); text-decoration: none; }
-    .auth-legal a:hover { color: var(--text); }
+    .auth-agree {
+      display: flex; align-items: flex-start; gap: 9px;
+      margin-top: 14px; max-width: 320px; width: 100%; cursor: pointer;
+    }
+    .auth-agree input[type="checkbox"] {
+      width: 17px; height: 17px; flex-shrink: 0; margin-top: 1px;
+      accent-color: var(--accent); cursor: pointer;
+    }
+    .auth-agree-label { font-size: 12px; color: var(--text-muted); line-height: 1.6; cursor: pointer; }
+    .auth-agree-label a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
+    .auth-agree-label a:hover { color: var(--text); }
+    .auth-error { margin-top: 10px; font-size: 13px; color: #ef4444; text-align: center; min-height: 18px; }
 
     /* ── Loading Screen ── */
     .loading-screen {
@@ -518,8 +527,8 @@
 <!-- ── Auth Screen ── -->
 <div class="auth-screen" id="authScreen">
   <div class="auth-logo">GymLog</div>
-  <p class="auth-tagline">Track your lifts.<br>Sync across all your devices.</p>
-  <button class="google-btn" id="btnGoogle">
+  <p class="auth-tagline">Track your lifts &amp; Progress.</p>
+  <button class="google-btn" id="btnGoogle" disabled>
     <svg width="20" height="20" viewBox="0 0 48 48">
       <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
       <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -528,8 +537,11 @@
     </svg>
     Continue with Google
   </button>
+  <label class="auth-agree">
+    <input type="checkbox" id="agreeCheck">
+    <span class="auth-agree-label">I agree to the <a href="/terms-of-service.html">Terms of Service</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</span>
+  </label>
   <p class="auth-error" id="authError"></p>
-  <p class="auth-legal">By continuing, you agree to our <a href="/terms-of-service.html">Terms of Service</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</p>
 </div>
 
 <!-- ── Loading Screen ── -->
@@ -691,6 +703,10 @@ let currentUid = null;
 // ─────────────────────────────────────────
 //  AUTH
 // ─────────────────────────────────────────
+document.getElementById('agreeCheck').addEventListener('change', e => {
+  document.getElementById('btnGoogle').disabled = !e.target.checked;
+});
+
 document.getElementById('btnGoogle').addEventListener('click', async () => {
   document.getElementById('authError').textContent = '';
   try {
