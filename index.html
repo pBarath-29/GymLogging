@@ -60,6 +60,9 @@
     .google-btn:active { opacity: 0.85; }
     .google-btn svg { flex-shrink: 0; }
     .auth-error { margin-top: 16px; font-size: 13px; color: #ef4444; text-align: center; min-height: 20px; }
+    .auth-legal { margin-top: 28px; font-size: 12px; color: var(--text-dim); text-align: center; }
+    .auth-legal a { color: var(--text-muted); text-decoration: none; }
+    .auth-legal a:hover { color: var(--text); }
 
     /* ── Loading Screen ── */
     .loading-screen {
@@ -526,6 +529,7 @@
     Continue with Google
   </button>
   <p class="auth-error" id="authError"></p>
+  <p class="auth-legal">By continuing, you agree to our <a href="/terms-of-service.html">Terms of Service</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</p>
 </div>
 
 <!-- ── Loading Screen ── -->
@@ -641,6 +645,12 @@
       <div class="settings-section-label">Danger Zone</div>
       <button class="settings-btn danger" id="btnDeleteAccount">Delete Account</button>
       <p class="settings-note">Permanently deletes your account and all workout data. This cannot be undone.</p>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-label">Legal</div>
+      <a href="/privacy-policy.html" class="settings-btn" style="display:flex;text-decoration:none;">Privacy Policy</a>
+      <a href="/terms-of-service.html" class="settings-btn" style="display:flex;text-decoration:none;margin-top:8px;">Terms of Service</a>
     </div>
   </div>
 </div>
