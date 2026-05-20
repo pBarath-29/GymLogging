@@ -1,0 +1,17 @@
+{
+  "name": "GymLog",
+  "short_name": "GymLog",
+  "description": "Track your lifts. Sync across all your devices.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#f97316",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
