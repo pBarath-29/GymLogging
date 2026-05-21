@@ -520,6 +520,29 @@
       cursor: pointer; background: rgba(239,68,68,0.08); border-radius: 6px;
     }
     .set-del:active { background: rgba(239,68,68,0.2); }
+
+    /* ── Activity Heatmap ── */
+    .heatmap-section { margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid #1e1e1e; }
+    .heatmap-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .heatmap-title { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .heatmap-legend { display: flex; align-items: center; gap: 10px; }
+    .heatmap-legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-muted); }
+    .hm-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+    .hm-dot.active { background: var(--accent); }
+    .hm-dot.rest   { background: rgba(99,102,241,0.5); }
+    .hm-dot.empty  { background: var(--surface2); border: 1px solid #333; }
+    .heatmap-stats { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-bottom: 12px; }
+    .heatmap-months { display: flex; gap: 3px; margin-bottom: 4px; }
+    .heatmap-month-lbl { flex: 1; font-size: 9px; color: var(--text-dim); overflow: hidden; white-space: nowrap; }
+    .heatmap-cols { display: flex; gap: 3px; }
+    .heatmap-col { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+    .heatmap-cell { width: 100%; aspect-ratio: 1; border-radius: 2px; }
+    .heatmap-cell.empty  { background: var(--surface2); }
+    .heatmap-cell.future { background: var(--surface); opacity: 0.25; }
+    .heatmap-cell.rest   { background: rgba(99,102,241,0.45); }
+    .heatmap-cell.logged { background: rgba(249,115,22,0.28); }
+    .heatmap-cell.active { background: var(--accent); }
+    .heatmap-cell.today  { outline: 1.5px solid var(--accent); outline-offset: 1.5px; }
   </style>
 </head>
 <body>
@@ -606,6 +629,22 @@
     <label class="add-photo-btn" for="photoInput">+ Add Photo</label>
     <input type="file" id="photoInput" accept="image/*" style="display:none">
   </div>
+
+  <!-- Activity Heatmap -->
+  <div class="heatmap-section">
+    <div class="heatmap-header">
+      <span class="heatmap-title">Activity</span>
+      <div class="heatmap-legend">
+        <div class="heatmap-legend-item"><span class="hm-dot active"></span>Workout</div>
+        <div class="heatmap-legend-item"><span class="hm-dot rest"></span>Rest</div>
+        <div class="heatmap-legend-item"><span class="hm-dot empty"></span>None</div>
+      </div>
+    </div>
+    <div class="heatmap-stats" id="heatmapStats"></div>
+    <div class="heatmap-months" id="heatmapMonths"></div>
+    <div class="heatmap-cols" id="heatmapGrid"></div>
+  </div>
+
   <div class="photo-grid" id="photoGrid"></div>
   <div class="prog-empty" id="progEmpty">
     <div class="empty-icon">📷</div>
@@ -1309,6 +1348,72 @@ document.getElementById('overlay').addEventListener('click', e => { if (e.target
 document.getElementById('sheetClose').addEventListener('click', closeOverlay);
 
 // ─────────────────────────────────────────
+//  ACTIVITY HEATMAP
+// ─────────────────────────────────────────
+function computeStreak() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const isActive = d => d && (d.rest || (d.groups && d.groups.some(g => g.exercises && g.exercises.length)));
+  const todayActive = isActive(db[dateKey(today)]);
+  let count = 0, cur = todayActive ? new Date(today) : addDays(today, -1);
+  while (true) {
+    const data = db[dateKey(cur)];
+    if (isActive(data)) { count++; cur = addDays(cur, -1); } else break;
+  }
+  return count;
+}
+
+function renderHeatmap() {
+  const gridEl   = document.getElementById('heatmapGrid');
+  const monthsEl = document.getElementById('heatmapMonths');
+  const statsEl  = document.getElementById('heatmapStats');
+  if (!gridEl) return;
+  gridEl.innerHTML = ''; monthsEl.innerHTML = '';
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const WEEKS = 13;
+  const startDate = getMonday(addDays(today, -(WEEKS - 1) * 7));
+
+  const total = Object.keys(db).filter(k => {
+    const d = db[k]; return d && !d.rest && d.groups && d.groups.some(g => g.exercises && g.exercises.length);
+  }).length;
+  const streak = computeStreak();
+  statsEl.textContent = total + ' workout' + (total !== 1 ? 's' : '') +
+    (streak > 0 ? ' · 🔥 ' + streak + ' day streak' : '');
+
+  let lastM = -1;
+  for (let w = 0; w < WEEKS; w++) {
+    const d = addDays(startDate, w * 7), m = d.getMonth();
+    const sp = document.createElement('span');
+    sp.className = 'heatmap-month-lbl';
+    sp.textContent = m !== lastM ? MONTHS[m] : '';
+    monthsEl.appendChild(sp);
+    lastM = m;
+  }
+
+  for (let w = 0; w < WEEKS; w++) {
+    const col = document.createElement('div');
+    col.className = 'heatmap-col';
+    for (let d = 0; d < 7; d++) {
+      const date   = addDays(startDate, w * 7 + d);
+      const key    = dateKey(date);
+      const future = date > today;
+      const data   = db[key];
+      let cls = future ? 'future' : 'empty';
+      if (!future && data) {
+        if (data.rest) cls = 'rest';
+        else if (data.groups && data.groups.some(g => g.exercises && g.exercises.length))
+          cls = calcVolume(data.groups) > 0 ? 'active' : 'logged';
+      }
+      const cell = document.createElement('div');
+      cell.className = 'heatmap-cell ' + cls;
+      if (sameDay(date, today)) cell.classList.add('today');
+      col.appendChild(cell);
+    }
+    gridEl.appendChild(col);
+  }
+}
+
+// ─────────────────────────────────────────
 //  PROGRESS PHOTOS
 // ─────────────────────────────────────────
 let photos = [];
@@ -1321,7 +1426,7 @@ function switchTab(tab) {
   document.getElementById('progressView').classList.toggle('active', !isWorkout);
   document.getElementById('bnavWorkout').classList.toggle('active', isWorkout);
   document.getElementById('bnavProgress').classList.toggle('active', !isWorkout);
-  if (!isWorkout) renderProgress();
+  if (!isWorkout) { renderProgress(); renderHeatmap(); }
 }
 
 async function loadPhotos() {
