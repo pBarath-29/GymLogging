@@ -21,35 +21,9 @@ A few things that make it useful in practice:
 - Firestore for storing workout data and progress photos (photos are stored as base64-encoded JPEG directly in Firestore documents).
 - Hosted on Render as a static site.
 
-## Hosting on Render
-
-1. Push this repo to GitHub.
-2. In Render, create a new Static Site and connect your repository.
-3. Set the publish directory to `.` (the root, since `index.html` is at the top level).
-4. No build command needed.
-
 ## Firebase setup
 
-The app uses Firebase v10 loaded directly from the CDN. The config is already embedded in `index.html`. If you want to run your own instance, replace the `firebaseConfig` object with your own project credentials.
-
-Make sure your Firestore security rules restrict access so each user can only read and write their own data. See the rules section below.
-
-## Firestore security rules
-
-Use these rules in your Firebase console under Firestore Database > Rules:
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
-```
-
-This ensures that authenticated users can only access documents under their own user ID, and unauthenticated requests are rejected entirely.
+The app uses Firebase v10 loaded directly from the CDN. The config is already embedded in `index.html`.
 
 ## Data structure
 
