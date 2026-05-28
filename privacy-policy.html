@@ -12,68 +12,56 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
       line-height: 1.7;
+      font-size: 16px;
     }
+    .top-bar {
+      position: sticky; top: 0; z-index: 10;
+      background: #1a1a1a; border-bottom: 1px solid #222;
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 16px; height: 54px;
+    }
+    .back-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; border-radius: 10px;
+      background: #242424; color: #f1f1f1; font-size: 18px;
+      text-decoration: none; flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .back-btn:active { background: #2e2e2e; }
+    .top-bar-title { font-size: 17px; font-weight: 700; }
     .page {
       max-width: 680px;
       margin: 0 auto;
-      padding: 48px 24px 80px;
+      padding: 28px 20px 60px;
     }
-    .logo {
-      font-size: 22px;
-      font-weight: 800;
-      color: #f97316;
-      letter-spacing: -1px;
-      margin-bottom: 40px;
-      display: block;
-      text-decoration: none;
-    }
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    .updated {
-      font-size: 13px;
-      color: #777;
-      margin-bottom: 40px;
-    }
+    h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+    .updated { font-size: 13px; color: #777; margin-bottom: 32px; }
     h2 {
-      font-size: 17px;
-      font-weight: 700;
-      color: #f97316;
-      margin-top: 36px;
-      margin-bottom: 10px;
+      font-size: 17px; font-weight: 700; color: #f97316;
+      margin-top: 32px; margin-bottom: 10px;
     }
-    p {
-      font-size: 15px;
-      color: #ccc;
-      margin-bottom: 14px;
-    }
-    ul {
-      padding-left: 20px;
-      margin-bottom: 14px;
-    }
-    li {
-      font-size: 15px;
-      color: #ccc;
-      margin-bottom: 6px;
-    }
-    a {
-      color: #f97316;
-      text-decoration: none;
-    }
+    p { font-size: 15px; color: #ccc; margin-bottom: 14px; }
+    ul { padding-left: 20px; margin-bottom: 14px; }
+    li { font-size: 15px; color: #ccc; margin-bottom: 8px; }
+    a { color: #f97316; text-decoration: none; }
     a:hover { text-decoration: underline; }
-    .divider {
-      border: none;
-      border-top: 1px solid #222;
-      margin: 36px 0;
+    .divider { border: none; border-top: 1px solid #222; margin: 36px 0; }
+    .footer-links { display: flex; gap: 4px; flex-wrap: wrap; }
+    .footer-links a {
+      font-size: 14px; color: #555; padding: 10px 12px;
+      border-radius: 8px; -webkit-tap-highlight-color: transparent;
     }
+    .footer-links a:hover { color: #f97316; text-decoration: none; background: #1a1a1a; }
   </style>
 </head>
 <body>
-  <div class="page">
-    <a class="logo" href="/">GymLog</a>
 
+  <div class="top-bar">
+    <a class="back-btn" href="/">&#8592;</a>
+    <span class="top-bar-title">Privacy Policy</span>
+  </div>
+
+  <div class="page">
     <h1>Privacy Policy</h1>
     <p class="updated">Last updated: May 2025</p>
 
@@ -136,7 +124,10 @@
     <p>If you have questions about this policy or your data, you can reach us at <a href="mailto:pbarath29@gmail.com">pbarath29@gmail.com</a>.</p>
 
     <hr class="divider">
-    <p style="font-size:13px; color:#555;"><a href="/">Back to app</a> &middot; <a href="/terms-of-service.html">Terms of Service</a></p>
+    <div class="footer-links">
+      <a href="/">&#8592; Back to app</a>
+      <a href="/terms-of-service.html">Terms of Service</a>
+    </div>
   </div>
 </body>
 </html>
