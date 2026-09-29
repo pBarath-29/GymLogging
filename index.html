@@ -630,54 +630,54 @@
       background: var(--bg); flex-direction: column;
     }
     .cal-overlay.open { display: flex; }
-    .cal-header {
-      display: flex; align-items: center; gap: 10px;
-      padding: 0 16px; height: var(--header-h);
-      border-bottom: 1px solid #222; flex-shrink: 0;
-    }
-    .cal-title { flex: 1; font-size: 18px; font-weight: 700; text-align: center; }
-    .cal-body { flex: 1; overflow-y: auto; padding: 16px 12px 32px; }
-    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-    .cal-dow {
-      font-size: 10px; font-weight: 600; color: var(--text-dim); text-align: center;
-      text-transform: uppercase; letter-spacing: 0.4px; padding-bottom: 4px;
-    }
-    .cal-cell {
-      aspect-ratio: 1; border-radius: 10px; border: 1px solid #222;
-      background: var(--surface); color: var(--text-muted);
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-      font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .cal-cell:active { background: var(--surface2); }
-    .cal-cell.empty { visibility: hidden; }
-    .cal-cell .c-mark { font-size: 10px; line-height: 1; height: 10px; }
-    .cal-cell .c-dot { width: 6px; height: 6px; border-radius: 50%; }
-    .cal-cell.planned .c-dot { border: 1.5px solid var(--accent); }
-    .cal-cell.done { background: rgba(249,115,22,0.14); border-color: rgba(249,115,22,0.35); color: var(--text); }
-    .cal-cell.done .c-dot { background: var(--accent); }
-    .cal-cell.rest { background: var(--rest-bg); border-color: var(--rest-border); color: var(--rest-color); }
-    .cal-cell.is-today { outline: 2px solid var(--accent); outline-offset: -2px; color: var(--accent); }
-    .cal-cell.is-selected { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .cal-cell.is-selected .c-dot { background: #fff; border-color: #fff; }
-    .cal-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 20px; }
-    .cal-stat {
-      background: var(--surface); border: 1px solid #222; border-radius: var(--radius);
-      padding: 12px 8px; text-align: center;
-    }
-    .cal-stat-num { font-size: 22px; font-weight: 700; }
-    .cal-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .cal-legend {
-      display: flex; flex-wrap: wrap; justify-content: center; gap: 14px;
-      margin-top: 16px; font-size: 11px; color: var(--text-muted);
-    }
-    .cal-legend span { display: flex; align-items: center; gap: 5px; }
-    .cal-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-    .cal-today-btn {
-      display: block; margin: 18px auto 0; background: var(--surface2); border: 1px solid #2a2a2a;
-      color: var(--text); border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 600;
+    .cal-top { flex-shrink: 0; padding: 10px 0 0; border-bottom: 0.5px solid #2a2a2a; }
+    .cal-topbar { padding: 0 16px; }
+    .cal-back-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--surface2); border: 1px solid #2a2a2a; color: var(--text);
+      border-radius: 999px; padding: 8px 16px 8px 12px; font-size: 17px; font-weight: 500;
       font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
     }
+    .cal-back-pill:active { background: var(--surface3); }
+    .cal-back-pill .chev { font-size: 24px; line-height: 1; margin-top: -2px; }
+    .cal-big-title { font-size: 34px; font-weight: 800; letter-spacing: -0.5px; padding: 14px 18px 6px; }
+    .cal-dow-row { display: grid; grid-template-columns: repeat(7, 1fr); padding-bottom: 6px; }
+    .cal-dow-row span { font-size: 11px; font-weight: 600; color: var(--text-muted); text-align: center; }
+    .cal-scroll {
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative;
+      padding-bottom: calc(96px + env(safe-area-inset-bottom));
+      overscroll-behavior: contain;
+    }
+    .cal-month { padding-top: 10px; }
+    .cal-row { display: grid; grid-template-columns: repeat(7, 1fr); }
+    .cal-mlabel { font-size: 20px; font-weight: 700; padding: 0 0 8px 10px; }
+    .cal-day {
+      height: 64px; border: none; border-top: 0.5px solid #2a2a2a; background: none; color: var(--text);
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      padding: 8px 0 0; gap: 5px; font-family: inherit; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cal-day.blank { border-top-color: transparent; cursor: default; }
+    .cal-day.wknd .c-num { color: var(--text-muted); }
+    .cal-day .c-num {
+      width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-size: 19px; font-weight: 500;
+    }
+    .cal-day:active .c-num { background: var(--surface2); }
+    .cal-day.is-selected .c-num { background: var(--surface3); color: var(--text); }
+    .cal-day.is-today .c-num { background: var(--accent); color: #fff; font-weight: 700; }
+    .cal-day .c-pill { width: 16px; height: 5px; border-radius: 3px; }
+    .cal-day.done .c-pill { background: var(--accent); }
+    .cal-day.planned .c-pill { border: 1.5px solid var(--accent); }
+    .cal-day.rest .c-pill { background: var(--rest-color); }
+    .cal-today-pill {
+      position: absolute; left: 20px; bottom: calc(20px + env(safe-area-inset-bottom));
+      background: rgba(40,40,40,0.85); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      border: 1px solid #333; color: var(--text); border-radius: 999px;
+      padding: 13px 26px; font-size: 17px; font-weight: 600; font-family: inherit;
+      cursor: pointer; -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    }
+    .cal-today-pill:active { background: rgba(60,60,60,0.9); }
   </style>
 </head>
 <body>
@@ -795,22 +795,15 @@
 
 <!-- ── Month Calendar ── -->
 <div class="cal-overlay" id="calOverlay">
-  <div class="cal-header">
-    <button class="back-btn" id="btnCloseCal">&#8592;</button>
-    <button class="nav-btn" id="btnCalPrev">&#8249;</button>
-    <span class="cal-title" id="calTitle"></span>
-    <button class="nav-btn" id="btnCalNext">&#8250;</button>
-  </div>
-  <div class="cal-body">
-    <div class="cal-grid" id="calGrid"></div>
-    <div class="cal-legend">
-      <span><i style="background:var(--accent)"></i>Completed</span>
-      <span><i style="border:1.5px solid var(--accent)"></i>Planned</span>
-      <span>😴 Rest</span>
+  <div class="cal-top">
+    <div class="cal-topbar">
+      <button class="cal-back-pill" id="btnCloseCal"><span class="chev">&#8249;</span><span id="calYear"></span></button>
     </div>
-    <div class="cal-stats" id="calStats"></div>
-    <button class="cal-today-btn" id="btnCalToday">Go to today</button>
+    <div class="cal-big-title" id="calTitle"></div>
+    <div class="cal-dow-row"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
   </div>
+  <div class="cal-scroll" id="calScroll"></div>
+  <button class="cal-today-pill" id="btnCalToday">Today</button>
 </div>
 
 <!-- ── Progress View ── -->
@@ -1471,56 +1464,96 @@ document.getElementById('btnNext').addEventListener('click', () => {
 //  MONTH CALENDAR
 // ─────────────────────────────────────────
 const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-let calMonth = new Date();
+let calSections = []; // [{ el, y, m }] in scroll order
 
 function openCalendar() {
-  const sel = addDays(weekStart, dayIdx);
-  calMonth = new Date(sel.getFullYear(), sel.getMonth(), 1);
   renderCalendar();
   document.getElementById('calOverlay').classList.add('open');
+  scrollCalTo(addDays(weekStart, dayIdx), false);
 }
 function closeCalendar() { document.getElementById('calOverlay').classList.remove('open'); }
 
-function renderCalendar() {
-  const y = calMonth.getFullYear(), m = calMonth.getMonth();
-  document.getElementById('calTitle').textContent = `${MONTHS_FULL[m]} ${y}`;
-  const grid = document.getElementById('calGrid');
-  grid.innerHTML = '';
-  DAYS.forEach(n => grid.appendChild(elMk('div', 'cal-dow', n.slice(0, 1))));
-
-  const lead = (new Date(y, m, 1).getDay() + 6) % 7;
-  for (let i = 0; i < lead; i++) grid.appendChild(elMk('div', 'cal-cell empty'));
-
-  const today = new Date(), selKey = dateKey(addDays(weekStart, dayIdx));
-  const daysInMonth = new Date(y, m + 1, 0).getDate();
-  let done = 0, rest = 0, volume = 0;
-  for (let n = 1; n <= daysInMonth; n++) {
-    const d = new Date(y, m, n), key = dateKey(d), day = db[key];
-    let state = '', mark = '<span class="c-mark"></span>';
-    if (day && day.rest) { state = 'rest'; mark = '<span class="c-mark">😴</span>'; rest++; }
-    else if (day && day.groups && day.groups.some(g => g.exercises && g.exercises.length)) {
-      const hasDone = day.groups.some(g => (g.exercises || []).some(ex => (ex.sets || []).some(s => s.done)));
-      state = hasDone ? 'done' : 'planned';
-      mark = '<span class="c-mark"><span class="c-dot" style="display:inline-block"></span></span>';
-      if (hasDone) { done++; volume += calcVolume(day.groups); }
-    }
-    const btn = document.createElement('button');
-    btn.className = `cal-cell ${state}${sameDay(d, today) ? ' is-today' : ''}${key === selKey ? ' is-selected' : ''}`;
-    btn.innerHTML = `<span>${n}</span>${mark}`;
-    btn.addEventListener('click', () => goToDate(d));
-    grid.appendChild(btn);
-  }
-
-  const stats = document.getElementById('calStats');
-  stats.innerHTML = '';
-  [[done, 'Workouts'], [rest, 'Rest days'], [volume >= 1000 ? `${(volume / 1000).toFixed(1)}k` : volume, 'Volume (kg)']]
-    .forEach(([num, label]) => {
-      const s = elMk('div', 'cal-stat');
-      s.appendChild(elMk('div', 'cal-stat-num', String(num)));
-      s.appendChild(elMk('div', 'cal-stat-label', label));
-      stats.appendChild(s);
-    });
+function dayState(day) {
+  if (!day) return '';
+  if (day.rest) return 'rest';
+  if (!day.groups || !day.groups.some(g => g.exercises && g.exercises.length)) return '';
+  const hasDone = day.groups.some(g => (g.exercises || []).some(ex => (ex.sets || []).some(s => s.done)));
+  return hasDone ? 'done' : 'planned';
 }
+
+function renderCalendar() {
+  const scroll = document.getElementById('calScroll');
+  scroll.innerHTML = '';
+  calSections = [];
+
+  // Range: earliest logged month (at least 12 months back) through 12 months ahead
+  const today = new Date();
+  let start = new Date(today.getFullYear(), today.getMonth() - 12, 1);
+  const earliest = Object.keys(db).sort()[0];
+  if (earliest) {
+    const [ey, em] = earliest.split('-').map(Number);
+    const e = new Date(ey, em - 1, 1);
+    if (e < start) start = e;
+  }
+  const end = new Date(today.getFullYear(), today.getMonth() + 12, 1);
+  const selKey = dateKey(addDays(weekStart, dayIdx)), todayKey = dateKey(today);
+
+  for (let cur = start; cur <= end; cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1)) {
+    const y = cur.getFullYear(), m = cur.getMonth();
+    const sec = elMk('section', 'cal-month');
+    const lead = (new Date(y, m, 1).getDay() + 6) % 7;
+
+    const labelRow = elMk('div', 'cal-row');
+    const label = elMk('div', 'cal-mlabel', MONTHS[m]);
+    label.style.gridColumn = `${lead + 1} / span 3`;
+    labelRow.appendChild(label);
+    sec.appendChild(labelRow);
+
+    let row = elMk('div', 'cal-row');
+    for (let i = 0; i < lead; i++) row.appendChild(elMk('div', 'cal-day blank'));
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    for (let n = 1; n <= daysInMonth; n++) {
+      const d = new Date(y, m, n), key = dateKey(d), col = (lead + n - 1) % 7;
+      const state = dayState(db[key]);
+      const btn = document.createElement('button');
+      btn.className = `cal-day ${state}${col >= 5 ? ' wknd' : ''}${key === todayKey ? ' is-today' : ''}${key === selKey ? ' is-selected' : ''}`;
+      btn.dataset.key = key;
+      btn.innerHTML = `<span class="c-num">${n}</span>${state ? '<span class="c-pill"></span>' : ''}`;
+      btn.addEventListener('click', () => goToDate(d));
+      row.appendChild(btn);
+      if (col === 6 || n === daysInMonth) { sec.appendChild(row); row = elMk('div', 'cal-row'); }
+    }
+    scroll.appendChild(sec);
+    calSections.push({ el: sec, y, m });
+  }
+}
+
+function scrollCalTo(d, smooth) {
+  const scroll = document.getElementById('calScroll');
+  const cell = scroll.querySelector(`.cal-day[data-key="${dateKey(d)}"]`);
+  if (!cell) return;
+  // Show the month from its top; if that would leave the day off-screen, centre on the day instead
+  let top = cell.closest('.cal-month').offsetTop;
+  if (cell.offsetTop + cell.offsetHeight - top > scroll.clientHeight - 100)
+    top = cell.offsetTop - scroll.clientHeight / 3;
+  scroll.scrollTo({ top: Math.max(0, top), behavior: smooth ? 'smooth' : 'auto' });
+  updateCalTitle();
+}
+
+function updateCalTitle() {
+  const pos = document.getElementById('calScroll').scrollTop + 40;
+  let cur = calSections[0];
+  for (const s of calSections) { if (s.el.offsetTop <= pos) cur = s; else break; }
+  if (!cur) return;
+  document.getElementById('calTitle').textContent = MONTHS_FULL[cur.m];
+  document.getElementById('calYear').textContent = cur.y;
+}
+
+let calTitleRaf = 0;
+document.getElementById('calScroll').addEventListener('scroll', () => {
+  if (calTitleRaf) return;
+  calTitleRaf = requestAnimationFrame(() => { calTitleRaf = 0; updateCalTitle(); });
+}, { passive: true });
 
 function goToDate(d) {
   weekStart = getMonday(d);
@@ -1534,16 +1567,7 @@ function goToDate(d) {
 document.getElementById('btnCalendar').addEventListener('click', openCalendar);
 document.getElementById('weekLabel').addEventListener('click', openCalendar);
 document.getElementById('btnCloseCal').addEventListener('click', closeCalendar);
-document.getElementById('btnCalPrev').addEventListener('click', () => {
-  calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); renderCalendar();
-});
-document.getElementById('btnCalNext').addEventListener('click', () => {
-  const limit = addDays(new Date(), 365);
-  const next = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1);
-  if (next > limit) { showToast("Can't plan more than a year ahead", 'warn'); return; }
-  calMonth = next; renderCalendar();
-});
-document.getElementById('btnCalToday').addEventListener('click', () => goToDate(new Date()));
+document.getElementById('btnCalToday').addEventListener('click', () => scrollCalTo(new Date(), true));
 
 // ─────────────────────────────────────────
 //  TIMER
