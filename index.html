@@ -678,6 +678,59 @@
       cursor: pointer; -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 20px rgba(0,0,0,0.5);
     }
     .cal-today-pill:active { background: rgba(60,60,60,0.9); }
+
+    /* ── Onboarding Tour ── */
+    .tour { display: none; position: fixed; inset: 0; z-index: 950; touch-action: none; }
+    .tour.open { display: block; }
+    .tour-shade {
+      position: fixed; left: 0; top: 0; width: 0; height: 0;
+      background: rgba(0,0,0,0.55);
+      -webkit-backdrop-filter: blur(7px) saturate(0.8); backdrop-filter: blur(7px) saturate(0.8);
+    }
+    .tour-ring {
+      position: fixed; left: 0; top: 0; width: 0; height: 0; pointer-events: none;
+      border-radius: 14px; border: 2px solid var(--accent);
+      box-shadow: 0 0 0 4px rgba(249,115,22,0.18), 0 0 28px 4px var(--accent-glow);
+      transition: opacity 0.25s;
+      animation: tourPulse 2s ease-in-out infinite;
+    }
+    @keyframes tourPulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(249,115,22,0.18), 0 0 28px 4px var(--accent-glow); }
+      50%      { box-shadow: 0 0 0 8px rgba(249,115,22,0.08), 0 0 40px 8px var(--accent-glow); }
+    }
+    .tour-card {
+      position: fixed; left: 16px; width: calc(100% - 32px); max-width: 360px;
+      background: rgba(30,30,30,0.92); border: 1px solid #333; border-radius: 22px;
+      -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+      padding: 20px 20px 16px; box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .tour-card.hidden { opacity: 0; transform: translateY(8px) scale(0.98); }
+    .tour-step { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px; }
+    .tour-title { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 6px; }
+    .tour-text { font-size: 14px; color: #aaa; line-height: 1.5; }
+    .tour-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+    .tour-dots { display: flex; gap: 5px; }
+    .tour-dots i { width: 6px; height: 6px; border-radius: 3px; background: #3a3a3a; transition: width 0.25s, background 0.25s; }
+    .tour-dots i.on { width: 18px; background: var(--accent); }
+    .tour-btns { display: flex; gap: 8px; }
+    .tour-btn {
+      border: none; border-radius: 12px; padding: 10px 18px; font-size: 14px; font-weight: 700;
+      font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .tour-btn.back { background: var(--surface2); color: var(--text); }
+    .tour-btn.next { background: var(--accent); color: #fff; box-shadow: 0 4px 16px var(--accent-glow); }
+    .tour-btn:active { opacity: 0.85; }
+    .tour-skip {
+      position: fixed; top: calc(12px + env(safe-area-inset-top)); right: 14px;
+      background: rgba(40,40,40,0.8); border: 1px solid #333; color: #ccc; border-radius: 999px;
+      padding: 7px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); -webkit-tap-highlight-color: transparent;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .tour-ring { animation: none; }
+      .tour-card { transition: none; }
+    }
   </style>
 </head>
 <body>
@@ -865,6 +918,11 @@
     </div>
 
     <div class="settings-section">
+      <div class="settings-section-label">Help</div>
+      <button class="settings-btn" id="btnReplayTour">Replay Tutorial</button>
+    </div>
+
+    <div class="settings-section">
       <div class="settings-section-label">Danger Zone</div>
       <button class="settings-btn danger" id="btnDeleteAccount">Delete Account</button>
       <p class="settings-note">Permanently deletes your account and all workout data. This cannot be undone.</p>
@@ -878,6 +936,25 @@
   </div>
 </div>
 
+<!-- ── Onboarding Tour ── -->
+<div class="tour" id="tour" role="dialog" aria-modal="true" aria-labelledby="tourTitle">
+  <div class="tour-shade"></div><div class="tour-shade"></div><div class="tour-shade"></div><div class="tour-shade"></div>
+  <div class="tour-ring" id="tourRing"></div>
+  <div class="tour-card hidden" id="tourCard">
+    <div class="tour-step" id="tourStep"></div>
+    <div class="tour-title" id="tourTitle"></div>
+    <div class="tour-text" id="tourText"></div>
+    <div class="tour-foot">
+      <div class="tour-dots" id="tourDots"></div>
+      <div class="tour-btns">
+        <button class="tour-btn back" id="tourBack">Back</button>
+        <button class="tour-btn next" id="tourNext">Next</button>
+      </div>
+    </div>
+  </div>
+  <button class="tour-skip" id="tourSkip">Skip</button>
+</div>
+
 </div><!-- #appRoot -->
 
 <script type="module">
@@ -885,7 +962,7 @@ import { initializeApp }                                       from 'https://www
 import { getAuth, GoogleAuthProvider, signInWithPopup,
          onAuthStateChanged, signOut, deleteUser,
          browserLocalPersistence, setPersistence }             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, doc, getDocs, setDoc,
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc,
          deleteDoc }                                           from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // ─────────────────────────────────────────
@@ -1007,6 +1084,7 @@ onAuthStateChanged(auth, async (user) => {
     show('appRoot');
     refreshTimer();
     render();
+    maybeStartTour();
   } else {
     currentUid = null;
     db = {};
@@ -2002,6 +2080,190 @@ document.getElementById('photoInput').addEventListener('change', e => uploadPhot
 document.getElementById('bnavWorkout').addEventListener('click',  () => switchTab('workout'));
 document.getElementById('bnavProgress').addEventListener('click', () => switchTab('progress'));
 document.getElementById('viewerClose').addEventListener('click',  () => document.getElementById('photoViewer').classList.remove('open'));
+
+// ─────────────────────────────────────────
+//  ONBOARDING TOUR
+// ─────────────────────────────────────────
+const tourKey = () => `glog_tour_done_${currentUid}`;
+const TOUR_STEPS = [
+  { title: 'Welcome to GymLog 👋', text: 'Here\'s a quick 30-second tour of how everything works.' },
+  { target: '#dayTabs', title: 'Your week', text: 'Tap any day to plan or log that day\'s workout. Use ‹ › up top to move between weeks.' },
+  { target: '#btnCalendar', title: 'Month view', text: 'See your whole month at a glance. Tap any date to jump straight to it.' },
+  { target: '.edit-toggle', title: 'Build your workout', text: 'Tap Edit to add muscle groups, exercises and sets. Tap Done when you\'re finished.' },
+  { target: '.ex-card', title: 'Log your sets', text: 'Enter weight and reps, then tap ✓ as you finish each set. Last session\'s numbers show underneath so you know what to beat.' },
+  { target: '#fabBtn', title: 'Rest timer', text: 'Start a countdown between sets. Your phone buzzes when it\'s time to go again.' },
+  { target: '#bnavLibrary', title: 'Collections', text: 'Save routines you repeat and apply them to any day in one tap.' },
+  { target: '#bnavProgress', title: 'Progress photos', text: 'Snap photos over time to see how your physique changes.' },
+  { target: '#userAvatar', title: 'You\'re all set 💪', text: 'Settings live here — you can replay this tour anytime.' },
+];
+const DEMO_DAY = { rest: false, groups: [{ name: 'Chest', exercises: [{ name: 'Bench Press', sets: [
+  { weight: '60', reps: '10', done: true }, { weight: '60', reps: '8', done: false },
+] }] }] };
+
+const tourEl = document.getElementById('tour');
+const tourShades = [...tourEl.querySelectorAll('.tour-shade')];
+const tourRing = document.getElementById('tourRing');
+const tourCard = document.getElementById('tourCard');
+const tourReduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tour = null; // { steps, idx, rect, anim, demoKey, demoOrig }
+
+async function isTourDone() {
+  try { if (localStorage.getItem(tourKey())) return true; } catch (_) {}
+  try {
+    const snap = await getDoc(doc(fdb, 'users', currentUid));
+    if (snap.exists() && snap.data().tutorialDone) return true;
+  } catch (_) {}
+  return false;
+}
+
+function markTourDone() {
+  try { localStorage.setItem(tourKey(), '1'); } catch (_) {}
+  if (currentUid) setDoc(doc(fdb, 'users', currentUid), { tutorialDone: true }, { merge: true }).catch(() => {});
+}
+
+async function maybeStartTour() {
+  // Only greet brand-new users automatically; everyone else can replay from Settings
+  if (Object.keys(db).length || await isTourDone()) return;
+  startTour();
+}
+
+function startTour() {
+  switchTab('workout');
+  closeCalendar();
+  weekStart = getMonday(new Date());
+  dayIdx = (new Date().getDay() + 6) % 7;
+  editMode = false;
+
+  // Show a sample exercise on today if there's nothing to point at. It lives only in memory:
+  // the tour blocks every tap, so it can't be saved, and it's removed when the tour ends.
+  const key = dateKey(new Date()), orig = db[key];
+  const hasEx = orig && !orig.rest && (orig.groups || []).some(g => g.exercises && g.exercises.length);
+  tour = { idx: 0, rect: null, anim: 0, demoKey: hasEx ? null : key, demoOrig: orig };
+  if (!hasEx) db[key] = JSON.parse(JSON.stringify(DEMO_DAY));
+  render();
+  document.getElementById('main').scrollTop = 0;
+
+  // Skip steps whose element isn't on screen (e.g. no profile photo)
+  tour.steps = TOUR_STEPS.filter(s => !s.target || tourTargetRect(s.target));
+  tourEl.classList.add('open');
+  showTourStep(0);
+}
+
+function endTour() {
+  if (!tour) return;
+  cancelAnimationFrame(tour.anim);
+  if (tour.demoKey) {
+    if (tour.demoOrig === undefined) delete db[tour.demoKey];
+    else db[tour.demoKey] = tour.demoOrig;
+  }
+  tour = null;
+  tourEl.classList.remove('open');
+  tourCard.classList.add('hidden');
+  markTourDone();
+  render();
+}
+
+function tourTargetRect(sel) {
+  const el = document.querySelector(sel);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+  const pad = 6;
+  return { x: r.left - pad, y: r.top - pad, w: r.width + pad * 2, h: r.height + pad * 2 };
+}
+
+function showTourStep(i) {
+  const step = tour.steps[i];
+  tour.idx = i;
+  if (step.target) {
+    const el = document.querySelector(step.target);
+    if (el && el.closest('main')) el.scrollIntoView({ block: 'center' });
+  }
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const to = (step.target && tourTargetRect(step.target)) || { x: vw / 2, y: vh / 2, w: 0, h: 0 };
+
+  // Fade the card out, glide the spotlight, then bring the card back in its new spot
+  tourCard.classList.add('hidden');
+  tourRing.style.opacity = step.target ? '1' : '0';
+  tweenTourRect(tour.rect || { x: vw / 2, y: vh / 2, w: 0, h: 0 }, to, () => {
+    document.getElementById('tourStep').textContent = `${i + 1} of ${tour.steps.length}`;
+    document.getElementById('tourTitle').textContent = step.title;
+    document.getElementById('tourText').textContent = step.text;
+    document.getElementById('tourDots').innerHTML = tour.steps.map((_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('');
+    document.getElementById('tourBack').style.display = i === 0 ? 'none' : '';
+    document.getElementById('tourNext').textContent =
+      i === 0 ? 'Start' : i === tour.steps.length - 1 ? "Let's go 💪" : 'Next';
+    placeTourCard(step.target ? to : null);
+    tourCard.classList.remove('hidden');
+  });
+}
+
+function tweenTourRect(from, to, done) {
+  cancelAnimationFrame(tour.anim);
+  const dur = tourReduceMotion ? 0 : 380, t0 = performance.now();
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const frame = now => {
+    if (!tour) return;
+    const t = dur ? Math.min(1, (now - t0) / dur) : 1, k = ease(t);
+    const r = { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k,
+                w: from.w + (to.w - from.w) * k, h: from.h + (to.h - from.h) * k };
+    drawTourRect(r);
+    if (t < 1) tour.anim = requestAnimationFrame(frame);
+    else { tour.rect = to; done && done(); }
+  };
+  tour.anim = requestAnimationFrame(frame);
+}
+
+function drawTourRect(r) {
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const box = (el, x, y, w, h) => Object.assign(el.style, {
+    left: `${x}px`, top: `${y}px`, width: `${Math.max(0, w)}px`, height: `${Math.max(0, h)}px`,
+  });
+  // Four frosted panels around the hole: top, bottom, left, right
+  box(tourShades[0], 0, 0, vw, r.y);
+  box(tourShades[1], 0, r.y + r.h, vw, vh - r.y - r.h);
+  box(tourShades[2], 0, r.y, r.x, r.h);
+  box(tourShades[3], r.x + r.w, r.y, vw - r.x - r.w, r.h);
+  box(tourRing, r.x, r.y, r.w, r.h);
+}
+
+function placeTourCard(r) {
+  const vh = window.innerHeight, vw = window.innerWidth;
+  const cw = tourCard.offsetWidth, ch = tourCard.offsetHeight, gap = 16;
+  tourCard.style.left = `${(vw - cw) / 2}px`;
+  let top;
+  if (!r) top = (vh - ch) / 2;
+  else if (r.y + r.h / 2 < vh / 2) top = r.y + r.h + gap;   // target in top half → card below
+  else top = r.y - ch - gap;                                 // target in bottom half → card above
+  tourCard.style.top = `${Math.min(Math.max(12, top), vh - ch - 12)}px`;
+}
+
+document.getElementById('tourNext').addEventListener('click', () => {
+  if (!tour) return;
+  if (tour.idx >= tour.steps.length - 1) endTour();
+  else showTourStep(tour.idx + 1);
+});
+document.getElementById('tourBack').addEventListener('click', () => { if (tour && tour.idx > 0) showTourStep(tour.idx - 1); });
+document.getElementById('tourSkip').addEventListener('click', endTour);
+document.addEventListener('keydown', e => {
+  if (!tour) return;
+  if (e.key === 'Escape') endTour();
+  else if (e.key === 'ArrowRight' || e.key === 'Enter') document.getElementById('tourNext').click();
+  else if (e.key === 'ArrowLeft') document.getElementById('tourBack').click();
+});
+window.addEventListener('resize', () => {
+  if (!tour || !tour.rect) return;
+  const step = tour.steps[tour.idx];
+  const r = step.target && tourTargetRect(step.target);
+  const vw = window.innerWidth, vh = window.innerHeight;
+  tour.rect = r || { x: vw / 2, y: vh / 2, w: 0, h: 0 };
+  drawTourRect(tour.rect);
+  placeTourCard(r);
+});
+document.getElementById('btnReplayTour').addEventListener('click', () => {
+  document.getElementById('btnCloseSettings').click();
+  startTour();
+});
 
 refreshTimer();
 </script>
