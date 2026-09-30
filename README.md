@@ -1,6 +1,6 @@
 # GymLog
 
-GymLog is a personal workout tracking web app. You log your lifts day by day, organized by muscle groups, and the app keeps everything synced across your devices using your Google account.
+GymLog is a personal workout tracking web app. You log your lifts day by day, organized by muscle groups, and the app keeps everything synced across your devices.
 
 ## What it does
 
@@ -8,34 +8,56 @@ The app is organized around a weekly calendar. Each day can either be a workout 
 
 A few things that make it useful in practice:
 
-- It remembers what you lifted last time for each exercise and shows it as a hint underneath the input, so you always know what to beat.
+- It remembers what you lifted last time for each exercise and shows it underneath the input, so you always know what to beat. Tap the hint to fill the set with those numbers.
+- Starter routines (Push, Pull, Legs, Upper, Lower, Full Body) can be applied to any day in one tap. You can also save your own routines as collections, and share a collection with someone by link.
 - If you do the same routine every week, you can copy last week's workout for that day in one tap.
-- There is a built-in rest timer with presets (30s, 1 min, 2 min, 3 min, 5 min). It vibrates and plays a sound when time is up.
-- The Progress tab lets you upload photos to track your physique over time. Photos are compressed and stored in your account.
-- Works as a Progressive Web App, so you can install it on your phone from the browser and use it like a native app.
+- Exercise names are suggested as you type, from your own history and a list of common lifts.
+- When a set beats your previous best for that exercise it is marked as a PR. Finishing every set of the day opens a summary you can share as an image.
+- There is a built-in rest timer with presets (30s, 1 min, 2 min, 3 min, 5 min). It vibrates and plays a sound when time is up, and stays accurate when the phone is locked.
+- The Progress tab shows workouts this week, your weekly streak, a strength chart per exercise, and progress photos. Photos are compressed and stored in your account.
+- Weights can be labelled in kg or lb (Settings). This changes the label only; logged numbers are not converted.
+- You can export all your data as a JSON file from Settings.
+- Works as a Progressive Web App: install it from the browser and use it like a native app. It opens and logs sets with no signal, and syncs when you are back online.
 
 ## Tech stack
 
 - Pure HTML, CSS, and JavaScript. No build step, no framework.
-- Firebase Authentication for Google Sign-In.
-- Firestore for storing workout data and progress photos (photos are stored as base64-encoded JPEG directly in Firestore documents).
+- Firebase Authentication for Google Sign-In and email/password sign-in.
+- Firestore for storing workout data and progress photos (photos are stored as base64-encoded JPEG directly in Firestore documents). Firestore's persistent local cache keeps a copy on the device for offline use.
+- Firebase Analytics for a small set of usage events.
+- A service worker (`sw.js`) that caches the app shell and the Firebase modules.
 - Hosted on Render as a static site.
 
 ## Firebase setup
 
 The app uses Firebase v10 loaded directly from the CDN. The config is already embedded in `index.html`.
 
+These are set in the Firebase console, not in this repo:
+
+- [ ] **Authentication > Sign-in method**: enable Google and **Email/Password**.
+- [ ] **Authentication > Settings > Authorized domains**: include the domain the app is served from.
+- [ ] **Firestore > Rules**: publish the contents of `firestore.rules`. Sharing a collection by link does not work until these rules are live.
+- [ ] **Analytics**: enabled for the project (the `measurementId` in the config must belong to it).
+
+If you change the Firebase version in `index.html`, change it in `sw.js` too and bump `CACHE` there.
+
 ## Data structure
 
 ```
 users/
-  {uid}/
+  {uid}                <- profile: tutorialDone, unit
     days/
       {YYYY-MM-DD}/    <- one document per day
+    templates/
+      {id}/            <- one document per collection
     photos/
       {timestamp}/     <- one document per photo (stores base64 JPEG)
+shared/
+  {id}/                <- snapshot of a collection shared by link: owner, name, groups, unit
 ```
+
+A share link is `/?c={id}`. Any signed-in user with the link can read that one document and copy it into their own collections.
 
 ## Account and data
 
-Users can delete their account from the Settings screen inside the app. This permanently removes all workout data and photos from Firestore and deletes the Firebase Auth account.
+Users can delete their account from the Settings screen inside the app. This permanently removes all workout data, collections, photos and shared collections from Firestore and deletes the Firebase Auth account.

@@ -7,9 +7,22 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="GymLog">
   <meta name="theme-color" content="#0f0f0f">
-  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
-  <title>GymLog</title>
+  <title>GymLog — track your lifts, know what to beat</title>
+  <meta name="description" content="A free workout log that shows what you lifted last time, so you always know what to beat. One-tap routines, rest timer, strength charts. Works offline and syncs across your devices.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="GymLog">
+  <meta property="og:title" content="GymLog — know what to beat, every set">
+  <meta property="og:description" content="A free workout log with one-tap routines, a rest timer and strength charts. Works offline.">
+  <meta property="og:image" content="/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="GymLog — know what to beat, every set">
+  <meta name="twitter:description" content="A free workout log with one-tap routines, a rest timer and strength charts. Works offline.">
+  <meta name="twitter:image" content="/og.png">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -52,18 +65,85 @@
     /* ── Auth Screen ── */
     .auth-screen {
       display: none; position: fixed; inset: 0; z-index: 1000;
-      background: var(--bg); flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: calc(32px + var(--sat)) 32px calc(32px + var(--sab));
+      background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: calc(24px + var(--sat)) 24px calc(24px + var(--sab));
     }
     .auth-screen.visible { display: flex; }
-    .auth-logo { font-size: 40px; font-weight: 800; color: var(--accent); letter-spacing: -2px; margin-bottom: 8px; }
-    .auth-tagline { font-size: 15px; color: var(--text-muted); margin-bottom: 36px; text-align: center; line-height: 1.5; }
+    .auth-inner {
+      margin: auto; width: 100%; max-width: 340px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .auth-logo { font-size: 34px; font-weight: 800; color: var(--accent); letter-spacing: -1.5px; margin-bottom: 10px; }
+    .auth-headline { font-size: 26px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.15; text-align: center; margin-bottom: 8px; }
+    .auth-tagline { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; text-align: center; line-height: 1.5; }
+
+    /* Miniature of the logging screen, so people see the app before signing in */
+    .auth-mock {
+      width: 100%; background: var(--surface); border: 1px solid #262626; border-radius: var(--radius);
+      padding: 12px 12px 8px; margin-bottom: 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+    .auth-mock-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .auth-mock-head b { font-size: 14px; font-weight: 600; }
+    .auth-mock-head span { font-size: 11px; font-weight: 700; color: var(--text-muted); background: var(--surface2); border-radius: 20px; padding: 2px 9px; }
+    .auth-mock-row { display: grid; grid-template-columns: 22px 1fr 1fr 26px; gap: 6px; align-items: center; padding: 2px 0; }
+    .auth-mock-row i { font-style: normal; font-size: 11px; font-weight: 700; color: var(--text-dim); text-align: center; }
+    .auth-mock-row em {
+      font-style: normal; font-size: 13px; text-align: center; background: var(--surface2);
+      border: 1px solid #2e2e2e; border-radius: 8px; padding: 5px 0;
+    }
+    .auth-mock-row u {
+      text-decoration: none; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #3a3a3a;
+      margin: 0 auto; font-size: 10px; color: transparent; display: flex; align-items: center; justify-content: center;
+    }
+    .auth-mock-row.done u { background: var(--success); border-color: var(--success); color: #fff; }
+    .auth-mock-row.done em { opacity: 0.55; }
+    .auth-mock-prev { font-size: 10px; color: var(--text-muted); text-align: center; padding: 1px 0 5px; }
+    .auth-mock-prev b { color: var(--accent); font-weight: 700; }
+
+    .auth-points { list-style: none; width: 100%; margin-bottom: 20px; display: flex; flex-direction: column; gap: 7px; }
+    .auth-points li { font-size: 13.5px; color: #bbb; line-height: 1.4; padding-left: 22px; position: relative; }
+    .auth-points li::before { content: '✓'; position: absolute; left: 2px; color: var(--accent); font-weight: 800; }
+    @media (max-height: 700px) {
+      .auth-mock { display: none; }
+      .auth-headline { font-size: 23px; }
+    }
+
+    .auth-notice {
+      display: none; width: 100%; background: rgba(249,115,22,0.07); border: 1px solid rgba(249,115,22,0.25);
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; font-size: 13px; color: #ccc; line-height: 1.5;
+    }
+    .auth-notice.visible { display: block; }
+    .auth-notice button {
+      display: block; margin-top: 8px; background: var(--accent); color: #fff; border: none; border-radius: 9px;
+      padding: 8px 14px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
+    }
+    .auth-or { display: flex; align-items: center; gap: 10px; width: 100%; margin: 14px 0 12px; font-size: 12px; color: var(--text-dim); }
+    .auth-or::before, .auth-or::after { content: ''; flex: 1; height: 1px; background: #262626; }
+    .auth-form { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+    .auth-input {
+      width: 100%; background: var(--surface); border: 1px solid #2a2a2a; color: var(--text);
+      border-radius: 12px; padding: 13px 14px; font-size: 16px; font-family: inherit; outline: none;
+    }
+    .auth-input:focus { border-color: var(--accent); }
+    .auth-input::placeholder { color: var(--text-dim); }
+    .auth-submit {
+      width: 100%; background: var(--surface2); border: 1px solid #333; color: var(--text);
+      border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .auth-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+    .auth-submit:not(:disabled):active { background: var(--surface3); }
+    .auth-links { display: flex; justify-content: space-between; width: 100%; margin-top: 10px; }
+    .auth-link {
+      background: none; border: none; color: var(--text-muted); font-size: 13px; font-family: inherit;
+      cursor: pointer; padding: 4px 2px; text-decoration: underline; text-underline-offset: 2px;
+      -webkit-tap-highlight-color: transparent;
+    }
     .google-btn {
       display: flex; align-items: center; justify-content: center; gap: 12px;
       background: #fff; color: #222; border: none; border-radius: 14px;
-      padding: 16px 28px; font-size: 16px; font-weight: 600; cursor: pointer;
-      width: 100%; max-width: 320px; font-family: inherit;
+      padding: 15px 28px; font-size: 16px; font-weight: 600; cursor: pointer;
+      width: 100%; font-family: inherit;
       box-shadow: 0 4px 24px rgba(0,0,0,0.4); transition: opacity 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
@@ -72,7 +152,7 @@
     .google-btn svg { flex-shrink: 0; }
     .auth-agree {
       display: flex; align-items: flex-start; gap: 9px;
-      margin-top: 14px; max-width: 320px; width: 100%; cursor: pointer;
+      margin-bottom: 14px; width: 100%; cursor: pointer;
     }
     .auth-agree input[type="checkbox"] {
       width: 17px; height: 17px; flex-shrink: 0; margin-top: 1px;
@@ -155,7 +235,7 @@
     .logo { font-size: clamp(17px, 5.2vw, 21px); font-weight: 800; white-space: nowrap; color: var(--accent); letter-spacing: -1px; }
     .user-avatar {
       width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
-      cursor: pointer; border: 2px solid #333; display: none;
+      cursor: pointer; border: 2px solid #333; display: block; flex-shrink: 0;
       -webkit-tap-highlight-color: transparent;
     }
     .week-nav { display: flex; align-items: center; gap: clamp(3px, 1.4vw, 6px); flex-shrink: 0; }
@@ -442,6 +522,15 @@
       gap: 6px; padding: 1px 2px 6px;
     }
     .set-prev-hint span { font-size: 11px; color: var(--text-dim); text-align: center; }
+    .set-prev-hint.tappable { cursor: pointer; -webkit-tap-highlight-color: transparent; border-radius: 6px; }
+    .set-prev-hint.tappable span { color: var(--text-muted); }
+    .set-prev-hint.tappable:active { background: rgba(249,115,22,0.1); }
+
+    /* ── Personal record badge ── */
+    .pr-badge {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.5px; color: #fff; background: var(--accent);
+      border-radius: 20px; padding: 3px 8px; flex-shrink: 0;
+    }
 
     /* ── Set progress badge ── */
     .set-progress {
@@ -699,6 +788,96 @@
     }
     .cal-today-pill:active { background: rgba(60,60,60,0.9); }
 
+    /* ── Settings: unit toggle ── */
+    .seg { display: flex; background: var(--surface); border: 1px solid #222; border-radius: var(--radius); padding: 4px; gap: 4px; }
+    .seg button {
+      flex: 1; background: none; border: none; color: var(--text-muted); border-radius: 10px;
+      padding: 11px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .seg button.sel { background: var(--accent); color: #fff; }
+    .settings-btn + .settings-btn { margin-top: 8px; }
+
+    /* ── Routine picker sections / starter routines ── */
+    .tpl-picker-label {
+      font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;
+      letter-spacing: 0.8px; padding: 14px 18px 6px;
+    }
+    .starter-wrap { margin-top: 4px; text-align: left; }
+    .starter-label {
+      font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;
+      letter-spacing: 0.8px; margin: 0 4px 8px;
+    }
+    .tpl-card-add {
+      flex-shrink: 0; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.3); color: var(--accent);
+      border-radius: 20px; padding: 7px 14px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tpl-card-add:active { background: rgba(249,115,22,0.2); }
+    .lib-empty.has-starters { padding: 28px 24px 20px; }
+
+    /* ── Progress: stats + strength chart ── */
+    .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+    .stat-tile { background: var(--surface); border: 1px solid #222; border-radius: var(--radius); padding: 12px 10px; }
+    .stat-value { font-size: 24px; font-weight: 600; line-height: 1.1; }
+    .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.3; }
+    .chart-card { background: var(--surface); border: 1px solid #222; border-radius: var(--radius); padding: 14px; margin-bottom: 24px; }
+    .chart-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+    .chart-title { font-size: 15px; font-weight: 700; }
+    .chart-select {
+      max-width: 58%; background: var(--surface2); border: 1px solid #2e2e2e; color: var(--text);
+      border-radius: 9px; padding: 7px 10px; font-size: 14px; font-family: inherit; outline: none;
+    }
+    .chart-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+    .chart-plot { position: relative; touch-action: pan-y; }
+    .chart-plot svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .chart-tip {
+      position: absolute; top: 0; pointer-events: none; display: none; white-space: nowrap;
+      background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 9px; padding: 6px 10px;
+      font-size: 12px; color: var(--text-muted); box-shadow: 0 4px 16px rgba(0,0,0,0.5); transform: translateX(-50%);
+    }
+    .chart-tip b { display: block; font-size: 14px; color: var(--text); font-weight: 700; }
+    .chart-empty { font-size: 13px; color: var(--text-muted); line-height: 1.6; padding: 14px 0 6px; text-align: center; }
+    .chart-table { margin-top: 10px; border-top: 1px solid #222; }
+    .chart-table div {
+      display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted);
+      padding: 7px 2px; border-bottom: 1px solid #1e1e1e; font-variant-numeric: tabular-nums;
+    }
+    .chart-table div b { color: var(--text); font-weight: 600; }
+    .prog-section-title { font-size: 17px; font-weight: 700; margin-bottom: 12px; }
+    .prog-empty { padding-top: 28px; }
+
+    /* ── Workout summary + shared-routine sheets (reuse .overlay / .sheet) ── */
+    .sum-title { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; text-align: center; margin-bottom: 2px; }
+    .sum-date { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 16px; }
+    .sum-list { margin: 4px 0 18px; }
+    .sum-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 9px 2px; border-bottom: 1px solid #222; font-size: 14px;
+    }
+    .sum-item span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sum-item .sum-val { color: var(--text-muted); flex-shrink: 0; display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+    .sum-group { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; padding: 12px 2px 2px; }
+
+    /* ── Install hint ── */
+    .install-hint {
+      display: none; position: fixed; left: max(12px, var(--sal)); right: max(12px, var(--sar));
+      bottom: calc(var(--bot-h) + 12px); z-index: 250;
+      background: #242424; border: 1px solid #383838; border-radius: 16px; padding: 14px 40px 14px 14px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.6);
+    }
+    .install-hint.open { display: block; }
+    .install-hint h4 { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .install-hint p { font-size: 13px; color: #aaa; line-height: 1.45; }
+    .install-hint .install-go {
+      margin-top: 10px; background: var(--accent); color: #fff; border: none; border-radius: 10px;
+      padding: 9px 16px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer;
+    }
+    .install-hint .install-x {
+      position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%;
+      background: none; border: none; color: var(--text-muted); font-size: 15px; cursor: pointer;
+    }
+
     /* ── Onboarding Tour ── */
     .tour { display: none; position: fixed; inset: 0; z-index: 950; touch-action: none; }
     .tour.open { display: block; }
@@ -742,12 +921,6 @@
     .tour-btn.back { background: var(--surface2); color: var(--text); }
     .tour-btn.next { background: var(--accent); color: #fff; box-shadow: 0 4px 16px var(--accent-glow); }
     .tour-btn:active { opacity: 0.85; }
-    .tour-skip {
-      position: fixed; top: calc(12px + var(--sat)); right: calc(14px + var(--sar));
-      background: rgba(40,40,40,0.8); border: 1px solid #333; color: #ccc; border-radius: 999px;
-      padding: 7px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
-      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); -webkit-tap-highlight-color: transparent;
-    }
     @media (prefers-reduced-motion: reduce) {
       .tour-ring { animation: none; }
       .tour-card { transition: none; }
@@ -758,8 +931,35 @@
 
 <!-- ── Auth Screen ── -->
 <div class="auth-screen" id="authScreen">
+  <div class="auth-inner">
   <div class="auth-logo">GymLog</div>
-  <p class="auth-tagline">Track your lifts &amp; Progress.</p>
+  <h1 class="auth-headline">Know what to beat,<br>every set.</h1>
+  <p class="auth-tagline" id="authTagline">A free workout log that remembers your last session for you.</p>
+
+  <div class="auth-mock" aria-hidden="true">
+    <div class="auth-mock-head"><b>Bench Press</b><span>1/2</span></div>
+    <div class="auth-mock-row done"><i>1</i><em>62.5</em><em>8</em><u>✓</u></div>
+    <div class="auth-mock-prev">last time 60 kg × 8 &nbsp;<b>+2.5 kg</b></div>
+    <div class="auth-mock-row"><i>2</i><em>62.5</em><em>8</em><u>✓</u></div>
+    <div class="auth-mock-prev">last time 60 kg × 7</div>
+  </div>
+
+  <ul class="auth-points">
+    <li>Start from a ready-made routine in one tap</li>
+    <li>Rest timer, personal records and strength charts</li>
+    <li>Works with no signal, syncs across your devices</li>
+  </ul>
+
+  <label class="auth-agree">
+    <input type="checkbox" id="agreeCheck">
+    <span class="auth-agree-label">I agree to the <a href="/terms-of-service.html">Terms of Service</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</span>
+  </label>
+
+  <div class="auth-notice" id="inAppNotice">
+    Google sign-in is blocked inside this app's browser. Open this page in Safari or Chrome, or use email below.
+    <button type="button" id="btnCopyLink">Copy link</button>
+  </div>
+
   <button class="google-btn" id="btnGoogle" disabled>
     <svg width="20" height="20" viewBox="0 0 48 48">
       <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -769,11 +969,19 @@
     </svg>
     Continue with Google
   </button>
-  <label class="auth-agree">
-    <input type="checkbox" id="agreeCheck">
-    <span class="auth-agree-label">I agree to the <a href="/terms-of-service.html">Terms of Service</a> and <a href="/privacy-policy.html">Privacy Policy</a>.</span>
-  </label>
+
+  <div class="auth-or" id="authOr">or</div>
+  <form class="auth-form" id="emailForm" novalidate>
+    <input class="auth-input" id="authEmail" type="email" placeholder="Email" autocomplete="email" inputmode="email">
+    <input class="auth-input" id="authPass" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="auth-submit" id="btnEmail" type="submit" disabled>Sign in with email</button>
+  </form>
+  <div class="auth-links">
+    <button class="auth-link" type="button" id="btnAuthMode">Create an account</button>
+    <button class="auth-link" type="button" id="btnForgot">Forgot password?</button>
+  </div>
   <p class="auth-error" id="authError"></p>
+  </div>
 </div>
 
 <!-- ── Loading Screen ── -->
@@ -842,8 +1050,9 @@
   <div class="lib-empty" id="tplEmpty">
     <div class="empty-icon">📋</div>
     <h3>No collections yet</h3>
-    <p>Tap <strong>+ New</strong> to build your first workout collection.</p>
+    <p>Tap <strong>+ New</strong> to build your own, or add a starter routine below.</p>
   </div>
+  <div class="starter-wrap" id="starterWrap"></div>
 </div>
 
 <!-- ── Template Editor Overlay ── -->
@@ -851,6 +1060,7 @@
   <div class="tpl-editor-header">
     <button class="back-btn" id="btnCloseTplEditor">&#8592;</button>
     <input class="tpl-name-input" id="tplNameInput" placeholder="Collection name…" maxlength="60">
+    <button class="tpl-del-btn" id="btnShareTpl" title="Share collection">🔗</button>
     <button class="tpl-del-btn" id="btnDeleteTpl" title="Delete collection">🗑</button>
   </div>
   <div class="tpl-editor-body" id="tplEditorBody"></div>
@@ -860,7 +1070,7 @@
 <div class="tpl-picker-overlay" id="tplPickerOverlay">
   <div class="tpl-picker-sheet">
     <div class="tpl-picker-header">
-      <span class="tpl-picker-title">Choose a Collection</span>
+      <span class="tpl-picker-title">Choose a Routine</span>
       <button class="tpl-picker-close" id="btnCloseTplPicker">✕</button>
     </div>
     <div id="tplPickerList"></div>
@@ -887,6 +1097,15 @@
     <label class="add-photo-btn" for="photoInput">+ Add Photo</label>
     <input type="file" id="photoInput" accept="image/*" style="display:none">
   </div>
+  <div class="stat-row" id="statRow"></div>
+  <div class="chart-card">
+    <div class="chart-head">
+      <span class="chart-title">Strength</span>
+      <select class="chart-select" id="chartSelect" aria-label="Exercise"></select>
+    </div>
+    <div id="chartBody"></div>
+  </div>
+  <h3 class="prog-section-title">Photos</h3>
   <div class="photo-grid" id="photoGrid"></div>
   <div class="prog-empty" id="progEmpty">
     <div class="empty-icon">📷</div>
@@ -934,7 +1153,17 @@
     </div>
 
     <div class="settings-section">
+      <div class="settings-section-label">Weight unit</div>
+      <div class="seg" id="unitSeg">
+        <button type="button" data-unit="kg">kg</button>
+        <button type="button" data-unit="lb">lb</button>
+      </div>
+      <p class="settings-note">Changes the label only. Numbers you've already logged are not converted.</p>
+    </div>
+
+    <div class="settings-section">
       <div class="settings-section-label">Account</div>
+      <button class="settings-btn" id="btnExport">Export My Data</button>
       <button class="settings-btn" id="btnSignOut">Sign Out</button>
     </div>
 
@@ -946,7 +1175,7 @@
     <div class="settings-section">
       <div class="settings-section-label">Danger Zone</div>
       <button class="settings-btn danger" id="btnDeleteAccount">Delete Account</button>
-      <p class="settings-note">Permanently deletes your account and all workout data. This cannot be undone.</p>
+      <p class="settings-note">Permanently deletes your account, all workout data, photos and shared links. This cannot be undone.</p>
     </div>
 
     <div class="settings-section">
@@ -973,8 +1202,46 @@
       </div>
     </div>
   </div>
-  <button class="tour-skip" id="tourSkip">Skip</button>
 </div>
+
+<!-- ── Workout Summary Sheet ── -->
+<div class="overlay" id="sumOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sum-title">Workout complete 💪</div>
+    <div class="sum-date" id="sumDate"></div>
+    <div class="stat-row" id="sumStats"></div>
+    <div class="sum-list" id="sumList"></div>
+    <div class="t-controls" style="margin-bottom:0">
+      <button class="t-btn secondary" id="btnSumClose">Done</button>
+      <button class="t-btn primary" id="btnSumShare">Share</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Shared Routine Sheet (opened from a share link) ── -->
+<div class="overlay" id="shareOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-top-row"><div class="sheet-title">Shared with you</div></div>
+    <div class="sum-title" id="shareName"></div>
+    <div class="sum-list" id="shareList"></div>
+    <div class="t-controls" style="margin-bottom:0">
+      <button class="t-btn secondary" id="btnShareDismiss">Not now</button>
+      <button class="t-btn primary" id="btnShareAdd">Add routine</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Install Hint ── -->
+<div class="install-hint" id="installHint">
+  <button class="install-x" id="btnInstallX" aria-label="Dismiss">✕</button>
+  <h4>Put GymLog on your home screen</h4>
+  <p id="installText"></p>
+  <button class="install-go" id="btnInstallGo">Install</button>
+</div>
+
+<datalist id="exNames"></datalist>
 
 </div><!-- #appRoot -->
 
@@ -982,9 +1249,12 @@
 import { initializeApp }                                       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup,
          onAuthStateChanged, signOut, deleteUser,
-         browserLocalPersistence, setPersistence }             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc,
-         deleteDoc }                                           from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+         browserLocalPersistence, setPersistence,
+         createUserWithEmailAndPassword, signInWithEmailAndPassword,
+         sendPasswordResetEmail, getAdditionalUserInfo }       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, initializeFirestore, persistentLocalCache,
+         persistentMultipleTabManager, collection, doc, getDoc,
+         getDocs, setDoc, deleteDoc, query, where }            from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // ─────────────────────────────────────────
 //  FIREBASE INIT
@@ -1001,34 +1271,128 @@ const firebaseConfig = {
 
 const fbApp   = initializeApp(firebaseConfig);
 const auth    = getAuth(fbApp);
-const fdb     = getFirestore(fbApp);
+
+// Keep a copy of the data on the device, so the app opens and logs sets with no signal
+// and syncs when the connection comes back. Falls back to memory-only where that's unavailable.
+let fdb;
+try {
+  fdb = initializeFirestore(fbApp, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+} catch (_) {
+  fdb = getFirestore(fbApp);
+}
 
 // Force localStorage persistence so session survives across browser sessions
 // (Firebase defaults to IndexedDB which mobile browsers, especially Safari, clear aggressively)
 await setPersistence(auth, browserLocalPersistence);
 
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+// Analytics loads on its own so a blocked or offline script can never hold up the app
+let analytics = null, logEventFn = null;
+import('https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js').then(async m => {
+  if (await m.isSupported()) { analytics = m.getAnalytics(fbApp); logEventFn = m.logEvent; }
+}).catch(() => {});
+function track(name, params) {
+  try { if (analytics) logEventFn(analytics, name, params); } catch (_) {}
+}
+
 let currentUid = null;
+
+// A link like /?c=abc123 carries a shared collection. Remember it until the user is signed in.
+const SHARE_KEY = 'glog_pending_share';
+{
+  const c = new URLSearchParams(location.search).get('c');
+  if (c && /^[A-Za-z0-9]{6,40}$/.test(c)) {
+    try { sessionStorage.setItem(SHARE_KEY, c); } catch (_) {}
+    history.replaceState(null, '', location.pathname);
+    document.getElementById('authTagline').textContent = 'Someone shared a routine with you. Sign in to add it.';
+  }
+}
 
 // ─────────────────────────────────────────
 //  AUTH
 // ─────────────────────────────────────────
+const authErr = msg => { document.getElementById('authError').textContent = msg; };
+const AUTH_MSGS = {
+  'auth/popup-blocked':           'Popup blocked — please allow popups for this site.',
+  'auth/network-request-failed':  'No internet connection — check your network.',
+  'auth/cancelled-popup-request': '',  // user dismissed, stay silent
+  'auth/popup-closed-by-user':    '',
+  'auth/invalid-email':           'That email address doesn\'t look right.',
+  'auth/missing-password':        'Enter your password.',
+  'auth/weak-password':           'Use a password with at least 6 characters.',
+  'auth/email-already-in-use':    'There\'s already an account with that email — sign in instead.',
+  'auth/invalid-credential':      'Wrong email or password.',
+  'auth/user-not-found':          'Wrong email or password.',
+  'auth/wrong-password':          'Wrong email or password.',
+  'auth/too-many-requests':       'Too many attempts — wait a minute and try again.',
+  'auth/operation-not-allowed':   'Email sign-in isn\'t switched on yet.',
+};
+const authMsg = e => e.code in AUTH_MSGS ? AUTH_MSGS[e.code] : 'Sign-in failed — please try again.';
+
+// Google refuses sign-in inside in-app browsers (Instagram, TikTok, …). Say so instead of failing.
+const inAppBrowser = /Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|BytedanceWebview|Line\/|MicroMessenger|Snapchat|LinkedInApp|Twitter/i.test(navigator.userAgent);
+if (inAppBrowser) {
+  document.getElementById('inAppNotice').classList.add('visible');
+  document.getElementById('btnGoogle').style.display = 'none';
+  document.getElementById('authOr').style.display = 'none';
+}
+document.getElementById('btnCopyLink').addEventListener('click', async e => {
+  try { await navigator.clipboard.writeText(location.href); e.target.textContent = 'Copied'; }
+  catch (_) { e.target.textContent = location.host; }
+});
+
 document.getElementById('agreeCheck').addEventListener('change', e => {
   document.getElementById('btnGoogle').disabled = !e.target.checked;
+  document.getElementById('btnEmail').disabled  = !e.target.checked;
 });
 
 document.getElementById('btnGoogle').addEventListener('click', async () => {
-  document.getElementById('authError').textContent = '';
+  authErr('');
   try {
-    await signInWithPopup(auth, new GoogleAuthProvider());
+    const res = await signInWithPopup(auth, new GoogleAuthProvider());
+    const info = getAdditionalUserInfo(res);
+    track(info && info.isNewUser ? 'sign_up' : 'login', { method: 'google' });
   } catch (e) {
-    const msgs = {
-      'auth/popup-blocked':           'Popup blocked — please allow popups for this site.',
-      'auth/network-request-failed':  'No internet connection — check your network.',
-      'auth/cancelled-popup-request': '',  // user dismissed, stay silent
-      'auth/popup-closed-by-user':    '',
-    };
-    document.getElementById('authError').textContent =
-      e.code in msgs ? msgs[e.code] : 'Sign-in failed — please try again.';
+    authErr(authMsg(e));
+  }
+});
+
+// Email + password. One form, switched between "sign in" and "create account".
+let authCreating = false;
+document.getElementById('btnAuthMode').addEventListener('click', e => {
+  authCreating = !authCreating;
+  document.getElementById('btnEmail').textContent = authCreating ? 'Create account' : 'Sign in with email';
+  document.getElementById('authPass').autocomplete = authCreating ? 'new-password' : 'current-password';
+  e.target.textContent = authCreating ? 'I already have an account' : 'Create an account';
+  authErr('');
+});
+document.getElementById('emailForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!document.getElementById('agreeCheck').checked) return;
+  const email = document.getElementById('authEmail').value.trim();
+  const pass  = document.getElementById('authPass').value;
+  if (!email) { authErr('Enter your email.'); return; }
+  authErr('');
+  const btn = document.getElementById('btnEmail');
+  btn.disabled = true;
+  try {
+    if (authCreating) { await createUserWithEmailAndPassword(auth, email, pass); track('sign_up', { method: 'email' }); }
+    else              { await signInWithEmailAndPassword(auth, email, pass);     track('login',   { method: 'email' }); }
+    document.getElementById('authPass').value = '';
+  } catch (err) {
+    authErr(authMsg(err));
+  }
+  btn.disabled = !document.getElementById('agreeCheck').checked;
+});
+document.getElementById('btnForgot').addEventListener('click', async () => {
+  const email = document.getElementById('authEmail').value.trim();
+  if (!email) { authErr('Type your email above, then tap "Forgot password?" again.'); return; }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    authErr('If that email has an account, a reset link is on its way.');
+  } catch (err) {
+    authErr(err.code === 'auth/invalid-email' ? AUTH_MSGS[err.code] : 'Couldn\'t send the reset email — try again.');
   }
 });
 
@@ -1046,6 +1410,7 @@ document.getElementById('btnCloseSettings').addEventListener('click', () => {
 document.getElementById('btnSignOut').addEventListener('click', async () => {
   if (!confirm('Sign out of GymLog?')) return;
   hide('settingsOverlay');
+  flushSaves();
   await signOut(auth);
   // onAuthStateChanged → shows auth screen
 });
@@ -1059,11 +1424,20 @@ document.getElementById('btnDeleteAccount').addEventListener('click', async () =
 
   try {
     const uid = currentUid;
-    // Delete all day documents
-    const snap = await getDocs(collection(fdb, 'users', uid, 'days'));
-    await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
-    const tsnap = await getDocs(collection(fdb, 'users', uid, 'templates'));
-    await Promise.all(tsnap.docs.map(d => deleteDoc(d.ref)));
+    // Deleting needs the server: offline, the deletes would just sit in a queue
+    if (!navigator.onLine) throw new Error('offline');
+    // Drop any edits still waiting to be written, so they can't recreate a day afterwards
+    pendingSaves.forEach(t => clearTimeout(t)); pendingSaves.clear();
+    // Delete all day, template and photo documents
+    for (const sub of ['days', 'templates', 'photos']) {
+      const snap = await getDocs(collection(fdb, 'users', uid, sub));
+      await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+    }
+    // Delete collections this user shared by link
+    try {
+      const ssnap = await getDocs(query(collection(fdb, 'shared'), where('owner', '==', uid)));
+      await Promise.all(ssnap.docs.map(d => deleteDoc(d.ref)));
+    } catch (_) {}
     // Delete the user document itself
     try { await deleteDoc(doc(fdb, 'users', uid)); } catch(_) {}
     // Delete Firebase Auth account
@@ -1074,6 +1448,8 @@ document.getElementById('btnDeleteAccount').addEventListener('click', async () =
     btn.textContent = 'Delete Account'; btn.disabled = false;
     if (e.code === 'auth/requires-recent-login') {
       alert('For security, please sign out and sign back in, then try again.');
+    } else if (e.message === 'offline') {
+      showToast('You need to be online to delete your account', 'warn', 4000);
     } else {
       showToast('Failed to delete account — please try again', 'error');
       console.error(e);
@@ -1088,27 +1464,32 @@ onAuthStateChanged(auth, async (user) => {
     hide('authScreen');
     hide('appRoot');
 
-    await loadFromFirestore();
-    await loadPhotos();
-    await loadTemplates();
+    // Photos are heavy and only needed on the Progress tab, so they load when it's first opened
+    photos = []; photosLoaded = false;
+    await Promise.all([loadFromFirestore(), loadTemplates(), loadProfile()]);
 
-    const avatar = document.getElementById('userAvatar');
-    if (user.photoURL) {
-      avatar.src = user.photoURL;
-      avatar.style.display = 'block';
-      document.getElementById('settingsAvatar').src = user.photoURL;
+    // Accounts without a picture (email sign-in) get their initial, so Settings is always reachable
+    const name = user.displayName || (user.email || '').split('@')[0] || 'Athlete';
+    const pic = user.photoURL || initialAvatar(name);
+    for (const id of ['userAvatar', 'settingsAvatar']) {
+      const img = document.getElementById(id);
+      img.onerror = () => { img.onerror = null; img.src = initialAvatar(name); };
+      img.src = pic;
     }
-    document.getElementById('settingsName').textContent  = user.displayName || 'Athlete';
+    document.getElementById('settingsName').textContent  = name;
     document.getElementById('settingsEmail').textContent = user.email || '';
 
     hide('loadingScreen');
     show('appRoot');
+    switchTab('workout');
     refreshTimer();
+    syncUnitSeg();
     render();
-    maybeStartTour();
+    if (!await maybeStartTour()) maybeImportShared();
   } else {
     currentUid = null;
-    db = {};
+    pendingSaves.forEach(t => clearTimeout(t)); pendingSaves.clear();
+    db = {}; templates = []; photos = []; photosLoaded = false; profile = {};
     show('authScreen');
     hide('loadingScreen');
     hide('appRoot');
@@ -1130,13 +1511,40 @@ function showToast(msg, type = 'default', duration = 3000) {
 }
 
 // ── Offline / online ──
-window.addEventListener('offline', () => showToast("You're offline — changes may not save", 'warn', 5000));
+window.addEventListener('offline', () => showToast("You're offline — changes sync when you're back", 'warn', 4000));
 window.addEventListener('online',  () => showToast('Back online', 'success', 2000));
 
 // ─────────────────────────────────────────
 //  FIRESTORE  (data lives in memory as `db`)
 // ─────────────────────────────────────────
 let db = {};
+let profile = {};   // users/{uid} document: tutorialDone, unit
+let unit = 'kg';    // label shown next to weights; numbers are stored as typed
+
+const unitKey = () => `glog_unit_${currentUid}`;
+
+async function loadProfile() {
+  profile = {};
+  try {
+    const snap = await getDoc(doc(fdb, 'users', currentUid));
+    if (snap.exists()) profile = snap.data();
+  } catch (_) {}
+  let saved = null;
+  try { saved = localStorage.getItem(unitKey()); } catch (_) {}
+  unit = profile.unit === 'lb' || (!profile.unit && saved === 'lb') ? 'lb' : 'kg';
+}
+
+function saveProfile(patch) {
+  Object.assign(profile, patch);
+  if (currentUid) setDoc(doc(fdb, 'users', currentUid), patch, { merge: true }).catch(() => {});
+}
+
+function initialAvatar(name) {
+  const ch = ((name || 'A').trim()[0] || 'A').toUpperCase().replace(/[<>&"']/g, 'A');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="#f97316"/>` +
+    `<text x="32" y="43" font-family="system-ui,sans-serif" font-size="32" font-weight="700" fill="#fff" text-anchor="middle">${ch}</text></svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
 
 async function loadFromFirestore() {
   // Migrate old localStorage data up to Firestore on first login
@@ -1145,7 +1553,8 @@ async function loadFromFirestore() {
     try {
       const localData = JSON.parse(local);
       for (const [dateKey, dayData] of Object.entries(localData)) {
-        await setDoc(doc(fdb, 'users', currentUid, 'days', dateKey), dayData);
+        // Not awaited: offline, a write only resolves once it reaches the server
+        setDoc(doc(fdb, 'users', currentUid, 'days', dateKey), dayData).catch(() => {});
       }
       localStorage.removeItem('glog_v3');
     } catch(_) {}
@@ -1165,10 +1574,24 @@ async function loadFromFirestore() {
     setTimeout(() => showToast(msg, 'error', 5000), 600);
   }
   computePrevData();
+  buildHistory();
 }
 
-// Save a single day to Firestore (fire-and-forget — UI stays instant)
+// Save a single day to Firestore (fire-and-forget — UI stays instant).
+// Typing fires this on every keystroke, so writes are held briefly and sent once per day-document.
+const pendingSaves = new Map(); // dateKey → timeout id
+
 function saveDB(key) {
+  if (!currentUid) return;
+  clearTimeout(pendingSaves.get(key));
+  pendingSaves.set(key, setTimeout(() => writeDay(key), 600));
+  if (key < dateKey(new Date())) computePrevData();
+  buildHistory();
+}
+
+function writeDay(key) {
+  clearTimeout(pendingSaves.get(key));
+  pendingSaves.delete(key);
   if (!currentUid) return;
   const dayRef = doc(fdb, 'users', currentUid, 'days', key);
   if (db[key]) {
@@ -1176,8 +1599,11 @@ function saveDB(key) {
   } else {
     deleteDoc(dayRef).catch(() => showToast("Couldn't delete — check your connection", 'error'));
   }
-  if (key < dateKey(new Date())) computePrevData();
 }
+
+function flushSaves() { [...pendingSaves.keys()].forEach(writeDay); }
+window.addEventListener('pagehide', flushSaves);
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushSaves(); });
 
 // ─────────────────────────────────────────
 //  HELPERS
@@ -1253,6 +1679,139 @@ function deepCloneGroups(groups) {
       ...ex, sets: (ex.sets || []).map(s => ({ ...s, done: false }))
     }))
   }));
+}
+
+// ─────────────────────────────────────────
+//  HISTORY  (personal records, chart data, streaks)
+// ─────────────────────────────────────────
+// exercise name (lowercase) → { name, sessions: [{ date, weight, reps, e1 }] }, oldest first.
+// One entry per day: the heaviest completed set, plus that day's best estimated 1-rep max.
+let exHist = new Map();
+
+const e1rm = (w, r) => r <= 1 ? w : w * (1 + r / 30);   // Epley estimate
+const fmtNum = n => String(Math.round(n * 100) / 100);
+const exId = ex => (ex.name || '').trim().toLowerCase();
+
+// Completed sets of an exercise that have both a weight and reps
+function doneSets(ex) {
+  const out = [];
+  (ex.sets || []).forEach((s, i) => {
+    const weight = parseFloat(s.weight), reps = parseInt(s.reps, 10);
+    if (s.done && weight > 0 && reps > 0) out.push({ i, weight, reps, e1: e1rm(weight, reps) });
+  });
+  return out;
+}
+
+function buildHistory() {
+  exHist = new Map();
+  Object.keys(db).sort().forEach(k => {
+    const day = db[k];
+    if (!day || day.rest) return;
+    for (const g of (day.groups || []))
+      for (const ex of (g.exercises || [])) {
+        const id = exId(ex), sets = doneSets(ex);
+        if (!id || !sets.length) continue;
+        const heavy = sets.reduce((a, b) => b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a);
+        const e1 = Math.max(...sets.map(s => s.e1));
+        if (!exHist.has(id)) exHist.set(id, { name: ex.name.trim(), sessions: [] });
+        const h = exHist.get(id), last = h.sessions[h.sessions.length - 1];
+        if (last && last.date === k) {   // same exercise twice in one day: keep the better numbers
+          if (heavy.weight > last.weight) { last.weight = heavy.weight; last.reps = heavy.reps; }
+          last.e1 = Math.max(last.e1, e1);
+        } else {
+          h.sessions.push({ date: k, weight: heavy.weight, reps: heavy.reps, e1 });
+        }
+      }
+  });
+}
+
+// Best numbers for an exercise on any day before `key`, or null if it has never been done
+function priorBest(id, key) {
+  const h = exHist.get(id);
+  if (!h) return null;
+  let best = null;
+  for (const s of h.sessions) {
+    if (s.date >= key) break;
+    if (!best) best = { weight: s.weight, e1: s.e1 };
+    else { best.weight = Math.max(best.weight, s.weight); best.e1 = Math.max(best.e1, s.e1); }
+  }
+  return best;
+}
+
+// Index of the set that is a personal record for this exercise on this day, or -1
+function prSetIndex(key, ex) {
+  const sets = doneSets(ex), prior = priorBest(exId(ex), key);
+  if (!sets.length || !prior) return -1;
+  const heavy = sets.reduce((a, b) => b.weight > a.weight ? b : a);
+  if (heavy.weight > prior.weight) return heavy.i;
+  const top = sets.reduce((a, b) => b.e1 > a.e1 ? b : a);
+  return top.e1 > prior.e1 + 0.01 ? top.i : -1;
+}
+
+function workoutStats() {
+  const worked = k => dayState(db[k]) === 'done';
+  const weekCount = mon => { let n = 0; for (let i = 0; i < 7; i++) if (worked(dateKey(addDays(mon, i)))) n++; return n; };
+  const thisMon = getMonday(new Date()), thisWeek = weekCount(thisMon);
+  // Weeks in a row with at least one workout. A week that has only just started doesn't break it.
+  let streak = 0, mon = thisWeek ? thisMon : addDays(thisMon, -7);
+  while (streak < 520 && weekCount(mon) > 0) { streak++; mon = addDays(mon, -7); }
+  return { thisWeek, streak, total: Object.keys(db).filter(worked).length };
+}
+
+// ─────────────────────────────────────────
+//  STARTER ROUTINES + EXERCISE NAME SUGGESTIONS
+// ─────────────────────────────────────────
+const stEx = (name, sets, reps) => ({ name, sets: Array.from({ length: sets }, () => ({ weight: '', reps: String(reps) })) });
+const STARTER_ROUTINES = [
+  { id: 'starter-push', name: 'Push', groups: [
+    { name: 'Chest',     exercises: [stEx('Bench Press', 3, 8), stEx('Incline Dumbbell Press', 3, 10)] },
+    { name: 'Shoulders', exercises: [stEx('Overhead Press', 3, 8), stEx('Lateral Raise', 3, 12)] },
+    { name: 'Triceps',   exercises: [stEx('Triceps Pushdown', 3, 12)] } ] },
+  { id: 'starter-pull', name: 'Pull', groups: [
+    { name: 'Back',   exercises: [stEx('Pull-Up', 3, 8), stEx('Barbell Row', 3, 8), stEx('Lat Pulldown', 3, 10)] },
+    { name: 'Biceps', exercises: [stEx('Barbell Curl', 3, 10), stEx('Hammer Curl', 3, 12)] } ] },
+  { id: 'starter-legs', name: 'Legs', groups: [
+    { name: 'Quads',      exercises: [stEx('Squat', 3, 8), stEx('Leg Press', 3, 10)] },
+    { name: 'Hamstrings', exercises: [stEx('Romanian Deadlift', 3, 8), stEx('Leg Curl', 3, 12)] },
+    { name: 'Calves',     exercises: [stEx('Calf Raise', 3, 15)] } ] },
+  { id: 'starter-upper', name: 'Upper Body', groups: [
+    { name: 'Chest',     exercises: [stEx('Bench Press', 3, 8)] },
+    { name: 'Back',      exercises: [stEx('Barbell Row', 3, 8), stEx('Lat Pulldown', 3, 10)] },
+    { name: 'Shoulders', exercises: [stEx('Overhead Press', 3, 8)] },
+    { name: 'Arms',      exercises: [stEx('Barbell Curl', 2, 12), stEx('Triceps Pushdown', 2, 12)] } ] },
+  { id: 'starter-lower', name: 'Lower Body', groups: [
+    { name: 'Legs',   exercises: [stEx('Squat', 3, 8), stEx('Romanian Deadlift', 3, 8), stEx('Leg Press', 3, 10), stEx('Leg Curl', 3, 12)] },
+    { name: 'Calves', exercises: [stEx('Calf Raise', 3, 15)] } ] },
+  { id: 'starter-full', name: 'Full Body', groups: [
+    { name: 'Legs',      exercises: [stEx('Squat', 3, 8)] },
+    { name: 'Chest',     exercises: [stEx('Bench Press', 3, 8)] },
+    { name: 'Back',      exercises: [stEx('Barbell Row', 3, 8)] },
+    { name: 'Shoulders', exercises: [stEx('Overhead Press', 3, 8)] },
+    { name: 'Core',      exercises: [stEx('Hanging Leg Raise', 3, 12)] } ] },
+];
+
+const COMMON_EXERCISES = [
+  'Bench Press', 'Incline Bench Press', 'Incline Dumbbell Press', 'Dumbbell Bench Press', 'Chest Fly', 'Cable Crossover', 'Push-Up', 'Dip',
+  'Overhead Press', 'Dumbbell Shoulder Press', 'Arnold Press', 'Lateral Raise', 'Front Raise', 'Rear Delt Fly', 'Face Pull', 'Shrug',
+  'Pull-Up', 'Chin-Up', 'Lat Pulldown', 'Barbell Row', 'Dumbbell Row', 'Seated Cable Row', 'T-Bar Row', 'Deadlift',
+  'Barbell Curl', 'Dumbbell Curl', 'Hammer Curl', 'Preacher Curl', 'Cable Curl',
+  'Triceps Pushdown', 'Skull Crusher', 'Overhead Triceps Extension', 'Close-Grip Bench Press',
+  'Squat', 'Front Squat', 'Leg Press', 'Hack Squat', 'Bulgarian Split Squat', 'Lunge', 'Leg Extension',
+  'Romanian Deadlift', 'Leg Curl', 'Hip Thrust', 'Glute Bridge', 'Calf Raise', 'Seated Calf Raise',
+  'Hanging Leg Raise', 'Cable Crunch', 'Ab Wheel Rollout', 'Russian Twist',
+];
+
+// Fills the shared <datalist>: names the user has typed before first, then the common lifts
+function refreshExNames() {
+  const seen = new Map();
+  const add = n => { n = (n || '').trim(); if (n && n !== 'Exercise' && !seen.has(n.toLowerCase())) seen.set(n.toLowerCase(), n); };
+  const scan = groups => (groups || []).forEach(g => (g.exercises || []).forEach(ex => add(ex.name)));
+  Object.values(db).forEach(day => scan(day && day.groups));
+  templates.forEach(t => scan(t.groups));
+  COMMON_EXERCISES.forEach(add);
+  const dl = document.getElementById('exNames');
+  dl.innerHTML = '';
+  seen.forEach(n => { const o = document.createElement('option'); o.value = n; dl.appendChild(o); });
 }
 
 // ─────────────────────────────────────────
@@ -1343,11 +1902,15 @@ function renderMain() {
     const emp = elMk('div', 'empty');
     emp.innerHTML = editMode
       ? `<div class="empty-icon">🏋️</div><h3>No exercises yet</h3><p>Tap below to add your first muscle group.</p>`
-      : `<div class="empty-icon">🏋️</div><h3>Nothing planned</h3><p>Tap <strong>Edit</strong> to set up your workout.</p>`;
+      : `<div class="empty-icon">🏋️</div><h3>Nothing planned</h3><p>Start from a routine, or build your own.</p>`;
     main.appendChild(emp);
 
-    // Copy last week button + Use Collection button
+    // Start from a routine + copy last week
     if (!editMode) {
+      const tplBtn = elMk('button', 'use-tpl-btn', '⚡ Start from a routine');
+      tplBtn.addEventListener('click', () => showTplPicker(key));
+      main.appendChild(tplBtn);
+
       const lastWeekKey = dateKey(addDays(d, -7));
       const lastWeek = db[lastWeekKey];
       if (lastWeek && !lastWeek.rest && lastWeek.groups && lastWeek.groups.some(g => g.exercises && g.exercises.length)) {
@@ -1355,24 +1918,24 @@ function renderMain() {
         copyBtn.addEventListener('click', () => {
           ensureDay(key).groups = deepCloneGroups(lastWeek.groups);
           saveDB(key); render();
+          track('routine_applied', { source: 'last_week' });
         });
         main.appendChild(copyBtn);
       }
-      const tplBtn = elMk('button', 'use-tpl-btn', '📋 Use a Collection');
-      tplBtn.addEventListener('click', () => showTplPicker(key));
-      main.appendChild(tplBtn);
     }
   } else {
     groups.forEach((g, gi) => main.appendChild(buildGroup(key, gi, g)));
   }
 
-  if (editMode) {
+  // On an empty day the button is there without having to find Edit first
+  if (editMode || groups.length === 0) {
     const addG = elMk('button', 'add-group-btn', '+ Add Muscle Group');
     addG.addEventListener('click', () => {
+      editMode = true;
       ensureDay(key).groups.push({ name:'', exercises:[] });
       saveDB(key); render();
       setTimeout(() => {
-        const names = document.querySelectorAll('.group-name.editable');
+        const names = document.querySelectorAll('#main .group-name.editable');
         const last = names[names.length - 1]; if (last) last.click();
       }, 60);
     });
@@ -1444,6 +2007,7 @@ function buildCard(key, gi, ei, ex) {
   hdr.appendChild(nameEl);
 
   if (!editMode && ex.sets && ex.sets.length > 0) {
+    if (prSetIndex(key, ex) >= 0) hdr.appendChild(elMk('span', 'pr-badge', 'PR'));
     const done = ex.sets.filter(s => s.done).length, total = ex.sets.length;
     hdr.appendChild(elMk('span', `set-progress${done===total?' all-done':''}`, `${done}/${total}`));
   }
@@ -1496,7 +2060,7 @@ function buildSetRow(key, gi, ei, si, set, exName, totalSets) {
   row.appendChild(num);
 
   const wInp = document.createElement('input');
-  wInp.type='number'; wInp.className='set-input'; wInp.placeholder='kg'; wInp.inputMode='decimal'; wInp.value=set.weight;
+  wInp.type='number'; wInp.className='set-input'; wInp.placeholder=unit; wInp.inputMode='decimal'; wInp.value=set.weight;
   wInp.addEventListener('input', e => {
     let v = parseFloat(e.target.value);
     if (e.target.value === '' || e.target.value === '-') { wInp.classList.add('input-error'); return; }
@@ -1521,19 +2085,41 @@ function buildSetRow(key, gi, ei, si, set, exName, totalSets) {
 
   const check = elMk('button', `set-check${set.done?' is-done':''}`, set.done ? '✓' : '');
   check.addEventListener('click', () => {
-    db[key].groups[gi].exercises[ei].sets[si].done = !set.done;
+    const ex = db[key].groups[gi].exercises[ei];
+    const wasComplete = isDayComplete(db[key].groups), hadPr = prSetIndex(key, ex) >= 0;
+    ex.sets[si].done = !set.done;
     saveDB(key); render();
+    if (!ex.sets[si].done) return;
+    if (!hadPr && prSetIndex(key, ex) === si) {
+      showToast(`New PR 🎉 ${ex.name || 'Exercise'} ${ex.sets[si].weight}${unit} × ${ex.sets[si].reps}`, 'success', 3500);
+      track('pr_hit');
+    }
+    if (!wasComplete && isDayComplete(db[key].groups)) openSummary(key);
+    else maybeShowInstallHint();
   });
   row.appendChild(check);
   wrap.appendChild(row);
 
-  // Previous session hint (view mode only)
+  // Previous session hint (view mode only). Tapping it copies those numbers into the set.
   if (!editMode) {
     const name = (exName || '').trim().toLowerCase();
     const prev = prevData[name];
     if (prev && prev[si] && (prev[si].weight || prev[si].reps)) {
       const hint = elMk('div', 'set-prev-hint');
-      hint.innerHTML = `<span></span><span>${prev[si].weight ? 'prev '+prev[si].weight+'kg' : ''}</span><span>${prev[si].reps ? '×'+prev[si].reps : ''}</span><span></span>`;
+      hint.appendChild(elMk('span'));
+      hint.appendChild(elMk('span', '', prev[si].weight ? `prev ${prev[si].weight}${unit}` : ''));
+      hint.appendChild(elMk('span', '', prev[si].reps ? `×${prev[si].reps}` : ''));
+      hint.appendChild(elMk('span'));
+      if (!set.done) {
+        hint.classList.add('tappable');
+        hint.title = 'Tap to fill';
+        hint.addEventListener('click', () => {
+          const s = db[key].groups[gi].exercises[ei].sets[si];
+          if (prev[si].weight) s.weight = String(prev[si].weight);
+          if (prev[si].reps)   s.reps   = String(prev[si].reps);
+          saveDB(key); render();
+        });
+      }
       wrap.appendChild(hint);
     }
   }
@@ -1543,6 +2129,7 @@ function buildSetRow(key, gi, ei, si, set, exName, totalSets) {
 function editExName(key, gi, ei, el) {
   const inp = elMk('input', 'ex-name-input');
   inp.value = db[key].groups[gi].exercises[ei].name || ''; inp.placeholder = 'Exercise name'; inp.maxLength = 80;
+  refreshExNames(); inp.setAttribute('list', 'exNames'); inp.autocomplete = 'off';
   el.replaceWith(inp); inp.focus(); inp.select();
   const commit = () => { db[key].groups[gi].exercises[ei].name = inp.value.trim() || 'Exercise'; saveDB(key); render(); };
   inp.addEventListener('blur', commit);
@@ -1671,7 +2258,7 @@ document.getElementById('btnCalToday').addEventListener('click', () => scrollCal
 // ─────────────────────────────────────────
 //  TIMER
 // ─────────────────────────────────────────
-const T = { total:30, left:30, running:false, iv:null };
+const T = { total:30, left:30, running:false, iv:null, endAt:0 };
 const elClock   = document.getElementById('clock');
 const elFill    = document.getElementById('fill');
 const elFabText = document.getElementById('fabText');
@@ -1680,15 +2267,25 @@ const elFab     = document.getElementById('fabBtn');
 
 function setDuration(secs) { clearInterval(T.iv); T.running=false; T.total=T.left=secs; refreshTimer(); syncPresets(); }
 
+// The countdown is measured against the clock, not by counting ticks: browsers slow or stop
+// timers when the screen locks, and this way the time is still right when you come back.
 function startTimer() {
   if (T.running || T.left <= 0) return;
   T.running = true;
-  T.iv = setInterval(() => {
-    T.left--; refreshTimer();
-    if (T.left === 0) { clearInterval(T.iv); T.running = false; onTimerDone(); }
-  }, 1000);
+  T.endAt = Date.now() + T.left * 1000;
+  T.iv = setInterval(tickTimer, 250);
   refreshTimer();
 }
+
+function tickTimer() {
+  if (!T.running) return;
+  const left = Math.max(0, Math.ceil((T.endAt - Date.now()) / 1000));
+  if (left === T.left) return;
+  T.left = left;
+  if (left === 0) { clearInterval(T.iv); T.running = false; refreshTimer(); onTimerDone(); }
+  else refreshTimer();
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tickTimer(); });
 
 function refreshTimer() {
   elClock.textContent = fmt(T.left);
@@ -1770,23 +2367,61 @@ async function deleteTpl(id) {
 function renderLibrary() {
   const list  = document.getElementById('tplList');
   const empty = document.getElementById('tplEmpty');
-  list.innerHTML = '';
-  if (templates.length === 0) { empty.style.display = ''; return; }
-  empty.style.display = 'none';
+  const starters = document.getElementById('starterWrap');
+  list.innerHTML = ''; starters.innerHTML = '';
+  empty.style.display = templates.length ? 'none' : '';
+  empty.classList.toggle('has-starters', !templates.length);
+
+  // Names are typed by users (or arrive through a share link), so they go in as text, never as HTML
+  const tplCard = (tpl, fallback) => {
+    const card = elMk('div', 'tpl-card');
+    const body = elMk('div', 'tpl-card-body');
+    body.appendChild(elMk('div', 'tpl-card-name', tpl.name || 'Untitled'));
+    body.appendChild(elMk('div', 'tpl-card-groups', tplGroupNames(tpl) || fallback));
+    card.appendChild(body);
+    return { card, body };
+  };
+
   templates.forEach(tpl => {
-    const card = document.createElement('div');
-    card.className = 'tpl-card';
-    const groups = (tpl.groups || []).map(g => g.name).filter(Boolean).join(' · ') || 'No groups yet';
-    card.innerHTML = `
-      <div class="tpl-card-body">
-        <div class="tpl-card-name">${tpl.name || 'Untitled'}</div>
-        <div class="tpl-card-groups">${groups}</div>
-      </div>
-      <button class="tpl-card-edit" title="Edit">✏️</button>`;
-    card.querySelector('.tpl-card-body').addEventListener('click', () => openTplEditor(tpl.id));
-    card.querySelector('.tpl-card-edit').addEventListener('click', () => openTplEditor(tpl.id));
+    const { card, body } = tplCard(tpl, 'No groups yet');
+    const edit = elMk('button', 'tpl-card-edit', '✏️'); edit.title = 'Edit';
+    body.addEventListener('click', () => openTplEditor(tpl.id));
+    edit.addEventListener('click', () => openTplEditor(tpl.id));
+    card.appendChild(edit);
     list.appendChild(card);
   });
+
+  // With nothing saved yet, offer ready-made routines to copy in
+  if (templates.length) return;
+  starters.appendChild(elMk('div', 'starter-label', 'Starter routines'));
+  const sList = elMk('div', 'tpl-list');
+  STARTER_ROUTINES.forEach(st => {
+    const { card } = tplCard(st, '');
+    card.style.cursor = 'default';
+    const add = elMk('button', 'tpl-card-add', '+ Add');
+    add.addEventListener('click', () => {
+      addTemplate(st.name, st.groups);
+      showToast(`Added "${st.name}"`, 'success');
+      renderLibrary();
+    });
+    card.appendChild(add);
+    sList.appendChild(card);
+  });
+  starters.appendChild(sList);
+}
+
+const tplGroupNames = tpl => (tpl.groups || []).map(g => g.name).filter(Boolean).join(' · ');
+
+// Saves a copy of some groups as a new collection and returns it
+function addTemplate(name, groups) {
+  const clean = deepCloneGroups(groups || []).map(g => ({
+    ...g, exercises: g.exercises.map(ex => ({ ...ex, sets: ex.sets.map(({ weight, reps }) => ({ weight: weight || '', reps: reps || '' })) }))
+  }));
+  const tpl = { id: String(Date.now()) + Math.floor(Math.random() * 1000), name, groups: clean };
+  templates.push(tpl);
+  templates.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  saveTpl(tpl.id);
+  return tpl;
 }
 
 // ── Template editor ──
@@ -1895,6 +2530,7 @@ function editTplExName(tid, gi, ei, el) {
   const tpl = templates.find(t => t.id === tid);
   const inp = elMk('input', 'ex-name-input');
   inp.value = tpl.groups[gi].exercises[ei].name || ''; inp.placeholder = 'Exercise name'; inp.maxLength = 80;
+  refreshExNames(); inp.setAttribute('list', 'exNames'); inp.autocomplete = 'off';
   el.replaceWith(inp); inp.focus(); inp.select();
   const commit = () => { tpl.groups[gi].exercises[ei].name = inp.value.trim() || 'Exercise'; saveTpl(tid); renderTplEditor(); };
   inp.addEventListener('blur', commit);
@@ -1913,7 +2549,7 @@ function buildTplSetRow(tid, gi, ei, si, set, totalSets) {
   }
   row.appendChild(num);
   const wInp = document.createElement('input');
-  wInp.type='number'; wInp.className='set-input'; wInp.placeholder='kg'; wInp.inputMode='decimal'; wInp.value=set.weight||'';
+  wInp.type='number'; wInp.className='set-input'; wInp.placeholder=unit; wInp.inputMode='decimal'; wInp.value=set.weight||'';
   wInp.addEventListener('input', e => {
     const v = parseFloat(e.target.value);
     tpl.groups[gi].exercises[ei].sets[si].weight = e.target.value==='' ? '' : isNaN(v) ? '' : String(Math.min(999, Math.max(0, v)));
@@ -1934,25 +2570,130 @@ function buildTplSetRow(tid, gi, ei, si, set, totalSets) {
 
 // ── Template picker (apply to a day) ──
 function showTplPicker(dayKey) {
-  if (templates.length === 0) {
-    showToast('No collections yet — create one in the Library tab', 'warn', 3500); return;
-  }
   const list = document.getElementById('tplPickerList');
   list.innerHTML = '';
-  templates.forEach(tpl => {
-    const btn = elMk('button', 'tpl-picker-item');
-    const groups = (tpl.groups||[]).map(g=>g.name).filter(Boolean).join(' · ') || 'No groups';
-    btn.innerHTML = `<strong>${tpl.name||'Untitled'}</strong><span>${groups}</span>`;
-    btn.addEventListener('click', () => {
-      ensureDay(dayKey).groups = deepCloneGroups(tpl.groups || []);
-      saveDB(dayKey); render();
-      document.getElementById('tplPickerOverlay').classList.remove('open');
-      showToast(`Applied "${tpl.name || 'Collection'}"`, 'success');
+  const addItems = (label, items, source) => {
+    if (!items.length) return;
+    list.appendChild(elMk('div', 'tpl-picker-label', label));
+    items.forEach(tpl => {
+      const btn = elMk('button', 'tpl-picker-item');
+      btn.appendChild(elMk('strong', '', tpl.name || 'Untitled'));
+      btn.appendChild(elMk('span', '', tplGroupNames(tpl) || 'No groups'));
+      btn.addEventListener('click', () => {
+        ensureDay(dayKey).groups = deepCloneGroups(tpl.groups || []);
+        saveDB(dayKey); render();
+        document.getElementById('tplPickerOverlay').classList.remove('open');
+        showToast(`Applied "${tpl.name || 'Collection'}"`, 'success');
+        track('routine_applied', { source });
+      });
+      list.appendChild(btn);
     });
-    list.appendChild(btn);
-  });
+  };
+  addItems('Your collections', templates, 'collection');
+  addItems('Starter routines', STARTER_ROUTINES, 'starter');
   document.getElementById('tplPickerOverlay').classList.add('open');
 }
+
+// ── Share a collection by link ──
+// A copy goes to shared/{id}; the link is /?c={id}. The copy is a snapshot: later edits don't change it.
+function newShareId() {
+  const chars = 'abcdefghijkmnpqrstuvwxyz23456789', buf = crypto.getRandomValues(new Uint8Array(14));
+  return [...buf].map(b => chars[b % chars.length]).join('');
+}
+
+async function shareTpl(id) {
+  const tpl = templates.find(t => t.id === id);
+  if (!tpl) return;
+  if (!(tpl.groups || []).some(g => (g.exercises || []).length)) { showToast('Add an exercise before sharing', 'warn'); return; }
+  if (!navigator.onLine) { showToast('You need to be online to share', 'warn'); return; }
+  const sid = newShareId(), name = (tpl.name || '').trim() || 'Untitled';
+  try {
+    // A write only resolves once the server has it, so give up waiting on a dead connection
+    await Promise.race([
+      setDoc(doc(fdb, 'shared', sid), {
+        owner: currentUid, name: name.slice(0, 80), groups: tpl.groups, unit, created: Date.now(),
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000)),
+    ]);
+  } catch (e) {
+    console.error(e);
+    showToast("Couldn't create a share link — try again", 'error'); return;
+  }
+  track('collection_shared');
+  const url = `${location.origin}/?c=${sid}`;
+  if (navigator.share) {
+    try { await navigator.share({ title: `${name} — GymLog`, text: `Here's my "${name}" routine on GymLog`, url }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(url); showToast('Link copied', 'success'); }
+  catch (_) { prompt('Copy this link:', url); }
+}
+
+// Groups from a shared doc, reduced to the fields and sizes the app expects
+function cleanSharedGroups(groups, fromUnit) {
+  const k = fromUnit === unit ? 1 : fromUnit === 'lb' ? 0.45359237 : 2.20462262;
+  const step = unit === 'kg' ? 2.5 : 5;   // land on weights a gym actually has
+  const num = (v, max) => { const n = parseFloat(v); return n > 0 && n <= max ? n : null; };
+  return (Array.isArray(groups) ? groups : []).slice(0, 20).map(g => ({
+    name: String(g && g.name || 'Group').slice(0, 80),
+    exercises: (Array.isArray(g && g.exercises) ? g.exercises : []).slice(0, 30).map(ex => ({
+      name: String(ex && ex.name || 'Exercise').slice(0, 80),
+      sets: (Array.isArray(ex && ex.sets) ? ex.sets : []).slice(0, 20).map(s => {
+        const w = num(s && s.weight, 9999), r = num(s && s.reps, 999);
+        return {
+          weight: w === null ? '' : fmtNum(Math.min(999, k === 1 ? w : Math.max(step, Math.round(w * k / step) * step))),
+          reps:   r === null ? '' : String(Math.round(r)),
+        };
+      }),
+    })),
+  }));
+}
+
+let sharedPending = null; // { name, groups } currently shown in the sheet
+
+async function maybeImportShared() {
+  let sid = null;
+  try { sid = sessionStorage.getItem(SHARE_KEY); sessionStorage.removeItem(SHARE_KEY); } catch (_) {}
+  if (!sid || !currentUid) return;
+  let data;
+  try {
+    const snap = await getDoc(doc(fdb, 'shared', sid));
+    if (!snap.exists()) { showToast('That shared routine no longer exists', 'warn', 4000); return; }
+    data = snap.data();
+  } catch (e) {
+    console.error(e);
+    showToast("Couldn't open the shared routine", 'error', 4000); return;
+  }
+  sharedPending = {
+    name: String(data.name || 'Shared routine').slice(0, 60),
+    groups: cleanSharedGroups(data.groups, data.unit === 'lb' ? 'lb' : 'kg'),
+  };
+  document.getElementById('shareName').textContent = sharedPending.name;
+  const list = document.getElementById('shareList');
+  list.innerHTML = '';
+  sharedPending.groups.forEach(g => {
+    list.appendChild(elMk('div', 'sum-group', g.name));
+    g.exercises.forEach(ex => {
+      const row = elMk('div', 'sum-item');
+      row.appendChild(elMk('span', '', ex.name));
+      row.appendChild(elMk('span', 'sum-val', `${ex.sets.length} ${ex.sets.length === 1 ? 'set' : 'sets'}`));
+      list.appendChild(row);
+    });
+  });
+  document.getElementById('shareOverlay').classList.add('open');
+}
+
+const closeShareSheet = () => { document.getElementById('shareOverlay').classList.remove('open'); sharedPending = null; };
+document.getElementById('btnShareDismiss').addEventListener('click', closeShareSheet);
+document.getElementById('btnShareAdd').addEventListener('click', () => {
+  if (!sharedPending) return;
+  const tpl = addTemplate(sharedPending.name, sharedPending.groups);
+  closeShareSheet();
+  switchTab('library');
+  showToast(`Added "${tpl.name}" to your collections`, 'success');
+  track('collection_imported');
+});
+document.getElementById('btnShareTpl').addEventListener('click', () => shareTpl(activeTplId));
 
 // ── Event listeners ──
 document.getElementById('btnNewTpl').addEventListener('click', () => {
@@ -1988,6 +2729,8 @@ document.getElementById('bnavLibrary').addEventListener('click', () => switchTab
 //  PROGRESS PHOTOS
 // ─────────────────────────────────────────
 let photos = [];
+let photosLoaded = false, photosLoading = false;
+let chartEx = null; // exercise (lowercase name) shown in the strength chart
 
 function switchTab(tab) {
   const isWorkout  = tab === 'workout';
@@ -2001,24 +2744,164 @@ function switchTab(tab) {
   document.getElementById('bnavWorkout').classList.toggle('active',  isWorkout);
   document.getElementById('bnavLibrary').classList.toggle('active',  isLibrary);
   document.getElementById('bnavProgress').classList.toggle('active', isProgress);
-  if (isProgress) renderProgress();
+  if (isProgress) {
+    if (!photosLoaded && !photosLoading)
+      loadPhotos().then(() => { if (document.getElementById('progressView').classList.contains('active')) renderProgress(); });
+    renderProgress();
+  }
   if (isLibrary)  renderLibrary();
 }
 
 async function loadPhotos() {
-  if (!currentUid) return;
+  if (!currentUid || photosLoaded) return;
+  const uid = currentUid;
+  photosLoading = true;
   try {
-    const snap = await getDocs(collection(fdb, 'users', currentUid, 'photos'));
-    photos = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => b.timestamp - a.timestamp);
-  } catch(_) { photos = []; }
+    const snap = await getDocs(collection(fdb, 'users', uid, 'photos'));
+    if (uid === currentUid) {
+      // Keep anything added while this was loading
+      const loaded = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const ids = new Set(loaded.map(p => p.id));
+      photos = loaded.concat(photos.filter(p => !ids.has(p.id))).sort((a, b) => b.timestamp - a.timestamp);
+      photosLoaded = true;
+    }
+  } catch(_) {}
+  photosLoading = false;
 }
 
+function renderStats() {
+  const s = workoutStats(), row = document.getElementById('statRow');
+  row.innerHTML = '';
+  [[s.thisWeek, s.thisWeek === 1 ? 'workout this week' : 'workouts this week'],
+   [s.streak,   'week streak'],
+   [s.total,    s.total === 1 ? 'workout logged' : 'workouts logged']].forEach(([v, label]) => {
+    const tile = elMk('div', 'stat-tile');
+    tile.appendChild(elMk('div', 'stat-value', String(v)));
+    tile.appendChild(elMk('div', 'stat-label', label));
+    row.appendChild(tile);
+  });
+}
+
+const svgEl = (tag, attrs) => {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+};
+const shortDate = key => { const [, m, d] = key.split('-').map(Number); return `${d} ${MONTHS[m - 1]}`; };
+
+// Heaviest completed set per session for one exercise, as a line over time
+function renderChart() {
+  const sel = document.getElementById('chartSelect'), body = document.getElementById('chartBody');
+  body.innerHTML = ''; sel.innerHTML = '';
+  // Most-trained exercises first
+  const list = [...exHist.entries()].sort((a, b) => b[1].sessions.length - a[1].sessions.length || a[1].name.localeCompare(b[1].name));
+  if (!list.length) {
+    sel.style.display = 'none';
+    body.appendChild(elMk('div', 'chart-empty', 'Tick off a few sets and your strength for each exercise will be charted here.'));
+    return;
+  }
+  sel.style.display = '';
+  if (!exHist.has(chartEx)) chartEx = list[0][0];
+  list.forEach(([id, h]) => { const o = elMk('option', '', h.name); o.value = id; o.selected = id === chartEx; sel.appendChild(o); });
+
+  const pts = exHist.get(chartEx).sessions;
+  const best = pts.reduce((a, b) => b.weight > a.weight ? b : a), last = pts[pts.length - 1];
+  body.appendChild(elMk('div', 'chart-sub', `Heaviest set per session · best ${fmtNum(best.weight)} ${unit} × ${best.reps}`));
+
+  // Scale: clean ticks around the data, time on x
+  const W = 320, H = 150, L = 34, R = 14, TOP = 12, B = 22;
+  const lo = Math.min(...pts.map(p => p.weight)), hi = Math.max(...pts.map(p => p.weight));
+  const step = [1, 2.5, 5, 10, 20, 25, 50, 100, 200].find(s => (hi - lo) / s <= 3) || 250;
+  let y0 = Math.floor(lo / step) * step, y1 = Math.ceil(hi / step) * step;
+  if (y0 === y1) { y0 = Math.max(0, y0 - step); y1 += step; }
+  const t = k => { const [y, m, d] = k.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+  const t0 = t(pts[0].date), t1 = t(last.date);
+  const px = p => pts.length === 1 ? (L + W - R) / 2 : L + (t(p.date) - t0) / (t1 - t0) * (W - L - R);
+  const py = w => TOP + (1 - (w - y0) / (y1 - y0)) * (H - TOP - B);
+
+  const plot = elMk('div', 'chart-plot');
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `${exHist.get(chartEx).name}: heaviest set per session` });
+  for (let v = y0; v <= y1 + 1e-9; v += step) {
+    svg.appendChild(svgEl('line', { x1: L, x2: W - R, y1: py(v), y2: py(v), stroke: '#2a2a2a', 'stroke-width': 1 }));
+    const tx = svgEl('text', { x: L - 6, y: py(v) + 3.5, 'text-anchor': 'end', 'font-size': 10, fill: '#777' });
+    tx.textContent = fmtNum(v); svg.appendChild(tx);
+  }
+  const xLabel = (p, anchor) => {
+    const tx = svgEl('text', { x: px(p), y: H - 5, 'text-anchor': anchor, 'font-size': 10, fill: '#777' });
+    tx.textContent = shortDate(p.date); svg.appendChild(tx);
+  };
+  if (pts.length === 1) xLabel(last, 'middle'); else { xLabel(pts[0], 'start'); xLabel(last, 'end'); }
+
+  if (pts.length > 1) {
+    const d = pts.map((p, i) => `${i ? 'L' : 'M'}${px(p).toFixed(1)} ${py(p.weight).toFixed(1)}`).join(' ');
+    svg.appendChild(svgEl('path', { d: `${d} L${px(last).toFixed(1)} ${py(y0)} L${px(pts[0]).toFixed(1)} ${py(y0)} Z`, fill: '#f97316', 'fill-opacity': 0.1 }));
+    svg.appendChild(svgEl('path', { d, fill: 'none', stroke: '#f97316', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+  }
+  const cross = svgEl('line', { y1: TOP, y2: H - B, stroke: '#555', 'stroke-width': 1, visibility: 'hidden' });
+  svg.appendChild(cross);
+  // Dots only where they stay readable; the last point always gets one and the value label
+  const dots = pts.map((p, i) => {
+    const c = svgEl('circle', { cx: px(p), cy: py(p.weight), r: 4, fill: '#f97316', stroke: '#1a1a1a', 'stroke-width': 2 });
+    if (pts.length > 16 && i !== pts.length - 1) c.setAttribute('visibility', 'hidden');
+    svg.appendChild(c);
+    return c;
+  });
+  const endLabel = svgEl('text', { x: px(last), y: py(last.weight) - 9, 'text-anchor': pts.length === 1 ? 'middle' : 'end', 'font-size': 11, 'font-weight': 700, fill: '#f1f1f1' });
+  endLabel.textContent = fmtNum(last.weight); svg.appendChild(endLabel);
+  plot.appendChild(svg);
+
+  // Touch or hover anywhere: the crosshair snaps to the nearest session
+  const tip = elMk('div', 'chart-tip');
+  plot.appendChild(tip);
+  const showAt = clientX => {
+    const box = svg.getBoundingClientRect(), x = (clientX - box.left) / box.width * W;
+    let ni = 0;
+    pts.forEach((p, i) => { if (Math.abs(px(p) - x) < Math.abs(px(pts[ni]) - x)) ni = i; });
+    const p = pts[ni];
+    cross.setAttribute('x1', px(p)); cross.setAttribute('x2', px(p)); cross.setAttribute('visibility', 'visible');
+    dots.forEach((c, i) => c.setAttribute('r', i === ni ? 5.5 : 4));
+    if (pts.length > 16) dots.forEach((c, i) => c.setAttribute('visibility', i === ni || i === pts.length - 1 ? 'visible' : 'hidden'));
+    tip.innerHTML = '';
+    tip.appendChild(elMk('b', '', `${fmtNum(p.weight)} ${unit} × ${p.reps}`));
+    tip.appendChild(document.createTextNode(shortDate(p.date)));
+    tip.style.display = 'block';
+    const half = tip.offsetWidth / 2, cx = px(p) / W * box.width;
+    tip.style.left = `${Math.min(box.width - half, Math.max(half, cx))}px`;
+  };
+  const hideTip = () => {
+    tip.style.display = 'none'; cross.setAttribute('visibility', 'hidden');
+    dots.forEach((c, i) => { c.setAttribute('r', 4); if (pts.length > 16) c.setAttribute('visibility', i === pts.length - 1 ? 'visible' : 'hidden'); });
+  };
+  plot.addEventListener('pointermove', e => showAt(e.clientX));
+  plot.addEventListener('pointerdown', e => showAt(e.clientX));
+  // On touch the readout stays after the finger lifts; with a mouse it follows the pointer out
+  plot.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+  body.appendChild(plot);
+
+  // The same numbers as a list, newest first
+  const table = elMk('div', 'chart-table');
+  pts.slice(-5).reverse().forEach(p => {
+    const row = elMk('div');
+    row.appendChild(elMk('span', '', shortDate(p.date)));
+    row.appendChild(elMk('b', '', `${fmtNum(p.weight)} ${unit} × ${p.reps}`));
+    table.appendChild(row);
+  });
+  body.appendChild(table);
+}
+document.getElementById('chartSelect').addEventListener('change', e => { chartEx = e.target.value; renderChart(); });
+
 function renderProgress() {
+  renderStats();
+  renderChart();
   const grid  = document.getElementById('photoGrid');
   const empty = document.getElementById('progEmpty');
   grid.innerHTML = '';
-  if (photos.length === 0) { empty.style.display = ''; return; }
+  if (photos.length === 0) {
+    empty.style.display = '';
+    empty.querySelector('h3').textContent = photosLoading ? 'Loading photos…' : 'No photos yet';
+    empty.querySelector('p').style.display = photosLoading ? 'none' : '';
+    return;
+  }
   empty.style.display = 'none';
   photos.forEach(p => {
     const card = document.createElement('div');
@@ -2062,14 +2945,18 @@ function resizeAndEncode(file, maxPx = 600, quality = 0.65) {
 
 async function uploadPhoto(file) {
   if (!file) return;
-  showToast('Saving…', 'default', 15000);
   try {
     const url = await resizeAndEncode(file);
     const ts = Date.now();
     const d = new Date(ts);
     const dateStr = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
     const meta = { url, timestamp: ts, dateStr };
-    await setDoc(doc(fdb, 'users', currentUid, 'photos', String(ts)), meta);
+    // Not awaited: offline, the write is kept on the device and sent later
+    setDoc(doc(fdb, 'users', currentUid, 'photos', String(ts)), meta).catch(() => {
+      photos = photos.filter(x => x.id !== String(ts));
+      renderProgress();
+      showToast('Failed to save photo — try again', 'error');
+    });
     photos.unshift({ id: String(ts), ...meta });
     renderProgress();
     showToast('Photo saved!', 'success');
@@ -2081,14 +2968,11 @@ async function uploadPhoto(file) {
 }
 
 async function deletePhoto(p) {
-  try {
-    await deleteDoc(doc(fdb, 'users', currentUid, 'photos', p.id));
-    photos = photos.filter(x => x.id !== p.id);
-    renderProgress();
-    showToast('Photo deleted', 'success');
-  } catch(e) {
-    showToast('Delete failed — try again', 'error');
-  }
+  deleteDoc(doc(fdb, 'users', currentUid, 'photos', p.id))
+    .catch(() => showToast('Delete failed — try again', 'error'));
+  photos = photos.filter(x => x.id !== p.id);
+  renderProgress();
+  showToast('Photo deleted', 'success');
 }
 
 function openViewer(p) {
@@ -2103,6 +2987,203 @@ document.getElementById('bnavProgress').addEventListener('click', () => switchTa
 document.getElementById('viewerClose').addEventListener('click',  () => document.getElementById('photoViewer').classList.remove('open'));
 
 // ─────────────────────────────────────────
+//  WORKOUT SUMMARY  (opens when the last set of the day is ticked)
+// ─────────────────────────────────────────
+let sumKey = null;
+
+function summaryData(key) {
+  const groups = (db[key] && db[key].groups) || [], items = [];
+  let sets = 0;
+  for (const g of groups)
+    for (const ex of (g.exercises || [])) {
+      const done = doneSets(ex);
+      sets += (ex.sets || []).filter(s => s.done).length;
+      const top = done.length ? done.reduce((a, b) => b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a) : null;
+      items.push({ name: ex.name || 'Exercise', top, pr: prSetIndex(key, ex) >= 0 });
+    }
+  const [y, m, d] = key.split('-').map(Number), date = new Date(y, m - 1, d);
+  return {
+    items, sets, volume: calcVolume(groups), prs: items.filter(i => i.pr).length,
+    dateStr: `${DFULL[(date.getDay() + 6) % 7]}, ${d} ${MONTHS[m - 1]} ${y}`,
+  };
+}
+const topSetText = top => top ? `${fmtNum(top.weight)} ${unit} × ${top.reps}` : '';
+
+function openSummary(key) {
+  sumKey = key;
+  const s = summaryData(key);
+  document.getElementById('sumDate').textContent = s.dateStr;
+  const stats = document.getElementById('sumStats');
+  stats.innerHTML = '';
+  [[s.items.length, s.items.length === 1 ? 'exercise' : 'exercises'],
+   [s.sets, s.sets === 1 ? 'set' : 'sets'],
+   [s.volume.toLocaleString(), `${unit} lifted`]].forEach(([v, label]) => {
+    const tile = elMk('div', 'stat-tile');
+    tile.appendChild(elMk('div', 'stat-value', String(v)));
+    tile.appendChild(elMk('div', 'stat-label', label));
+    stats.appendChild(tile);
+  });
+  const list = document.getElementById('sumList');
+  list.innerHTML = '';
+  s.items.forEach(it => {
+    const row = elMk('div', 'sum-item');
+    row.appendChild(elMk('span', '', it.name));
+    const val = elMk('span', 'sum-val');
+    if (it.pr) val.appendChild(elMk('span', 'pr-badge', 'PR'));
+    val.appendChild(document.createTextNode(topSetText(it.top)));
+    row.appendChild(val);
+    list.appendChild(row);
+  });
+  document.getElementById('sumOverlay').classList.add('open');
+  track('workout_completed', { exercises: s.items.length, sets: s.sets, prs: s.prs });
+}
+
+function closeSummary() {
+  document.getElementById('sumOverlay').classList.remove('open');
+  maybeShowInstallHint();
+}
+document.getElementById('btnSumClose').addEventListener('click', closeSummary);
+document.getElementById('sumOverlay').addEventListener('click', e => { if (e.target === document.getElementById('sumOverlay')) closeSummary(); });
+
+function downloadBlob(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+// Draws the workout as a 1080×1350 image for sharing
+function drawShareCard(s) {
+  const c = document.createElement('canvas');
+  c.width = 1080; c.height = 1350;
+  const g = c.getContext('2d'), font = (px, w = 400) => `${w} ${px}px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif`;
+  const text = (str, x, y, f, color, align = 'left') => { g.font = f; g.fillStyle = color; g.textAlign = align; g.fillText(str, x, y); };
+  // Shortens a string with … until it fits in maxW at the current font
+  const fit = (str, maxW) => {
+    if (g.measureText(str).width <= maxW) return str;
+    while (str.length > 1 && g.measureText(str + '…').width > maxW) str = str.slice(0, -1);
+    return str + '…';
+  };
+  const pill = (x, y, w, h, r, color) => {   // roundRect is missing on older phones; square corners there
+    g.fillStyle = color; g.beginPath();
+    if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h);
+    g.fill();
+  };
+  g.fillStyle = '#0f0f0f'; g.fillRect(0, 0, 1080, 1350);
+  text('GymLog', 80, 140, font(64, 800), '#f97316');
+  text(s.dateStr, 1000, 136, font(34), '#888', 'right');
+  text('Workout complete', 80, 310, font(88, 800), '#f1f1f1');
+
+  [[String(s.items.length), s.items.length === 1 ? 'exercise' : 'exercises'],
+   [String(s.sets), s.sets === 1 ? 'set' : 'sets'],
+   [s.volume.toLocaleString(), `${unit} lifted`]].forEach(([v, label], i) => {
+    const x = 80 + i * 320;
+    pill(x, 380, 280, 190, 28, '#1a1a1a');
+    g.font = font(72, 700);
+    text(fit(v, 232), x + 24, 478, font(72, 700), '#f1f1f1');
+    text(label, x + 24, 534, font(30), '#888');
+  });
+
+  const shown = s.items.slice(0, 7);
+  shown.forEach((it, i) => {
+    const y = 690 + i * 78, val = topSetText(it.top);
+    g.font = font(38);
+    const valW = val ? g.measureText(val).width : 0;
+    text(val, 1000, y, font(38), '#aaa', 'right');
+    let right = 1000 - valW - (val ? 24 : 0);
+    if (it.pr) {
+      pill(right - 84, y - 40, 84, 52, 26, '#f97316');
+      text('PR', right - 42, y - 2, font(28, 800), '#fff', 'center');
+      right -= 108;
+    }
+    g.font = font(40, 600);
+    text(fit(it.name, right - 80), 80, y, font(40, 600), '#f1f1f1');
+    g.fillStyle = '#222'; g.fillRect(80, y + 26, 920, 2);
+  });
+  if (s.items.length > shown.length) text(`+ ${s.items.length - shown.length} more`, 80, 690 + shown.length * 78, font(34), '#888');
+  text(location.host, 80, 1280, font(32), '#666');
+  return c;
+}
+
+document.getElementById('btnSumShare').addEventListener('click', async () => {
+  if (!sumKey || !db[sumKey]) return;
+  const blob = await new Promise(res => drawShareCard(summaryData(sumKey)).toBlob(res, 'image/png'));
+  if (!blob) { showToast("Couldn't create the image", 'error'); return; }
+  const file = new File([blob], `gymlog-${sumKey}.png`, { type: 'image/png' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: 'My workout' }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  downloadBlob(blob, file.name);
+  showToast('Image saved', 'success');
+});
+
+// ─────────────────────────────────────────
+//  INSTALL HINT  (shown once, after the first ticked set)
+// ─────────────────────────────────────────
+const INSTALL_KEY = 'glog_install_hint';
+let installEvent = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvent = e; });
+window.addEventListener('appinstalled', () => { installEvent = null; closeInstallHint(); track('install_prompt', { outcome: 'installed' }); });
+
+function maybeShowInstallHint() {
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  let seen = false;
+  try { seen = !!localStorage.getItem(INSTALL_KEY); } catch (_) {}
+  if (standalone || seen || tour) return;
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  if (!installEvent && !ios) return;   // nothing useful to offer on this browser
+  document.getElementById('installText').textContent = installEvent
+    ? 'It opens like an app and works with no signal.'
+    : 'Tap the Share button, then "Add to Home Screen". It opens like an app and works with no signal.';
+  document.getElementById('btnInstallGo').style.display = installEvent ? '' : 'none';
+  document.getElementById('installHint').classList.add('open');
+  try { localStorage.setItem(INSTALL_KEY, '1'); } catch (_) {}
+  track('install_prompt', { outcome: 'shown' });
+}
+function closeInstallHint() { document.getElementById('installHint').classList.remove('open'); }
+document.getElementById('btnInstallX').addEventListener('click', closeInstallHint);
+document.getElementById('btnInstallGo').addEventListener('click', async () => {
+  closeInstallHint();
+  if (!installEvent) return;
+  installEvent.prompt();
+  const choice = await installEvent.userChoice.catch(() => null);
+  installEvent = null;
+  if (choice) track('install_prompt', { outcome: choice.outcome });
+});
+
+// ─────────────────────────────────────────
+//  SETTINGS: UNIT + EXPORT
+// ─────────────────────────────────────────
+function syncUnitSeg() {
+  document.querySelectorAll('#unitSeg button').forEach(b => b.classList.toggle('sel', b.dataset.unit === unit));
+}
+document.getElementById('unitSeg').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b || b.dataset.unit === unit) return;
+  unit = b.dataset.unit;
+  try { localStorage.setItem(unitKey(), unit); } catch (_) {}
+  saveProfile({ unit });
+  syncUnitSeg(); render();
+});
+
+document.getElementById('btnExport').addEventListener('click', async e => {
+  const btn = e.currentTarget;
+  btn.disabled = true; btn.textContent = 'Preparing…';
+  flushSaves();
+  await loadPhotos();
+  const data = {
+    app: 'GymLog', exportedAt: new Date().toISOString(), unit,
+    days: db,
+    collections: templates.map(({ id, ...t }) => t),
+    photos: photos.map(({ id, ...p }) => p),
+  };
+  downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `gymlog-export-${dateKey(new Date())}.json`);
+  btn.disabled = false; btn.textContent = 'Export My Data';
+  showToast(photosLoaded ? 'Export downloaded' : "Export downloaded — photos couldn't be loaded", photosLoaded ? 'success' : 'warn', 4000);
+});
+
+// ─────────────────────────────────────────
 //  ONBOARDING TOUR
 // ─────────────────────────────────────────
 const tourKey = () => `glog_tour_done_${currentUid}`;
@@ -2111,10 +3192,10 @@ const TOUR_STEPS = [
   { target: '#dayTabs', title: 'Your week', text: 'Tap any day to plan or log that day\'s workout. Use ‹ › up top to move between weeks.' },
   { target: '#btnCalendar', title: 'Month view', text: 'See your whole month at a glance. Tap any date to jump straight to it.' },
   { target: '.edit-toggle', title: 'Build your workout', text: 'Tap Edit to add muscle groups, exercises and sets. Tap Done when you\'re finished.' },
-  { target: '.ex-card', title: 'Log your sets', text: 'Enter weight and reps, then tap ✓ as you finish each set. Last session\'s numbers show underneath so you know what to beat.' },
+  { target: '.ex-card', title: 'Log your sets', text: 'Enter weight and reps, then tap ✓ as you finish each set. Last session\'s numbers show underneath — tap them to fill the set in.' },
   { target: '#fabBtn', title: 'Rest timer', text: 'Start a countdown between sets. Your phone buzzes when it\'s time to go again.' },
-  { target: '#bnavLibrary', title: 'Collections', text: 'Save routines you repeat and apply them to any day in one tap.' },
-  { target: '#bnavProgress', title: 'Progress photos', text: 'Snap photos over time to see how your physique changes.' },
+  { target: '#bnavLibrary', title: 'Collections', text: 'Save routines you repeat and apply them to any day in one tap. Starter routines are ready to use, and you can share yours by link.' },
+  { target: '#bnavProgress', title: 'Progress', text: 'Your streak, a strength chart for every exercise, and photos to see how your physique changes.' },
   { target: '#userAvatar', title: 'You\'re all set 💪', text: 'Settings live here — you can replay this tour anytime.' },
 ];
 const DEMO_DAY = { rest: false, groups: [{ name: 'Chest', exercises: [{ name: 'Bench Press', sets: [
@@ -2128,29 +3209,29 @@ const tourCard = document.getElementById('tourCard');
 const tourReduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let tour = null; // { steps, idx, rect, anim, demoKey, demoOrig }
 
-async function isTourDone() {
+function isTourDone() {
   try { if (localStorage.getItem(tourKey())) return true; } catch (_) {}
-  try {
-    const snap = await getDoc(doc(fdb, 'users', currentUid));
-    if (snap.exists() && snap.data().tutorialDone) return true;
-  } catch (_) {}
-  return false;
+  return !!profile.tutorialDone;
 }
 
 function markTourDone() {
   try { localStorage.setItem(tourKey(), '1'); } catch (_) {}
-  if (currentUid) setDoc(doc(fdb, 'users', currentUid), { tutorialDone: true }, { merge: true }).catch(() => {});
+  saveProfile({ tutorialDone: true });
 }
 
+// Returns true if the tour was started
 async function maybeStartTour() {
   // Only greet brand-new users automatically; everyone else can replay from Settings
-  if (Object.keys(db).length || await isTourDone()) return;
+  if (Object.keys(db).length || isTourDone()) return false;
   startTour();
+  return true;
 }
 
 function startTour() {
   switchTab('workout');
   closeCalendar();
+  closeInstallHint();
+  flushSaves();   // nothing may be waiting to save while the sample day below is in memory
   weekStart = getMonday(new Date());
   dayIdx = (new Date().getDay() + 6) % 7;
   editMode = false;
@@ -2184,6 +3265,7 @@ function endTour() {
   tourCard.classList.add('hidden');
   markTourDone();
   render();
+  maybeImportShared();   // a share link that was waiting behind the tour
 }
 
 // Screen area not covered by the notch / status bar / home indicator, in px
@@ -2233,10 +3315,10 @@ function measureTourCard(i) {
   return h;
 }
 
-// Vertical band the card may occupy: below the Skip button, above the home indicator
+// Vertical band the card may occupy: clear of the status bar and the home indicator
 function tourBounds() {
   const safe = tourSafeArea();
-  return { safe, minTop: safe.top + 56, maxBottom: safe.bottom - 12, gap: 14 };
+  return { safe, minTop: safe.top + 12, maxBottom: safe.bottom - 12, gap: 14 };
 }
 
 function showTourStep(i) {
@@ -2327,11 +3409,9 @@ document.getElementById('tourNext').addEventListener('click', () => {
   else showTourStep(tour.idx + 1);
 });
 document.getElementById('tourBack').addEventListener('click', () => { if (tour && tour.idx > 0) showTourStep(tour.idx - 1); });
-document.getElementById('tourSkip').addEventListener('click', endTour);
 document.addEventListener('keydown', e => {
   if (!tour) return;
-  if (e.key === 'Escape') endTour();
-  else if (e.key === 'ArrowRight' || e.key === 'Enter') document.getElementById('tourNext').click();
+  if (e.key === 'ArrowRight' || e.key === 'Enter') document.getElementById('tourNext').click();
   else if (e.key === 'ArrowLeft') document.getElementById('tourBack').click();
 });
 window.addEventListener('resize', () => {
