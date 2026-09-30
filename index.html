@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="GymLog">
@@ -31,6 +31,15 @@
       --header-h: 58px;
       --tabs-h: 76px;
       --nav-h: 58px;
+      /* Device safe areas (notch, home indicator, rounded corners) — 0 on devices without them */
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --sal: env(safe-area-inset-left, 0px);
+      --sar: env(safe-area-inset-right, 0px);
+      --top-h: calc(var(--header-h) + var(--sat));
+      --bot-h: calc(var(--nav-h) + var(--sab));
+      --gutter-l: max(16px, var(--sal));
+      --gutter-r: max(16px, var(--sar));
     }
 
     html, body {
@@ -44,7 +53,8 @@
     .auth-screen {
       display: none; position: fixed; inset: 0; z-index: 1000;
       background: var(--bg); flex-direction: column;
-      align-items: center; justify-content: center; padding: 32px;
+      align-items: center; justify-content: center;
+      padding: calc(32px + var(--sat)) 32px calc(32px + var(--sab));
     }
     .auth-screen.visible { display: flex; }
     .auth-logo { font-size: 40px; font-weight: 800; color: var(--accent); letter-spacing: -2px; margin-bottom: 8px; }
@@ -94,7 +104,7 @@
     .settings-overlay.visible { display: flex; }
     .settings-header {
       display: flex; align-items: center; gap: 12px;
-      padding: 0 16px; height: var(--header-h);
+      padding: var(--sat) var(--gutter-r) 0 var(--gutter-l); height: var(--top-h);
       border-bottom: 1px solid #222; flex-shrink: 0;
     }
     .back-btn {
@@ -105,7 +115,7 @@
     }
     .back-btn:active { background: var(--surface3); }
     .settings-title { font-size: 18px; font-weight: 700; }
-    .settings-body { padding: 24px 16px; overflow-y: auto; flex: 1; }
+    .settings-body { padding: 24px var(--gutter-r) calc(24px + var(--sab)) var(--gutter-l); overflow-y: auto; flex: 1; }
     .settings-profile {
       display: flex; align-items: center; gap: 16px;
       background: var(--surface); border-radius: var(--radius);
@@ -136,44 +146,46 @@
 
     /* ── Header ── */
     header {
-      position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
-      background: var(--surface); display: flex; align-items: center;
-      justify-content: space-between; padding: 0 16px; z-index: 100;
+      position: fixed; top: 0; left: 0; right: 0; height: var(--top-h);
+      background: var(--surface); display: flex; align-items: center; gap: 8px;
+      justify-content: space-between; padding: var(--sat) var(--gutter-r) 0 var(--gutter-l); z-index: 100;
       border-bottom: 1px solid #222;
     }
-    .header-left { display: flex; align-items: center; gap: 10px; }
-    .logo { font-size: 21px; font-weight: 800; color: var(--accent); letter-spacing: -1px; }
+    .header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .logo { font-size: clamp(17px, 5.2vw, 21px); font-weight: 800; white-space: nowrap; color: var(--accent); letter-spacing: -1px; }
     .user-avatar {
       width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
       cursor: pointer; border: 2px solid #333; display: none;
       -webkit-tap-highlight-color: transparent;
     }
-    .week-nav { display: flex; align-items: center; gap: 6px; }
+    .week-nav { display: flex; align-items: center; gap: clamp(3px, 1.4vw, 6px); flex-shrink: 0; }
     .nav-btn {
-      width: 34px; height: 34px; background: var(--surface2); border: 1px solid #2a2a2a;
+      width: clamp(30px, 8.5vw, 34px); height: clamp(30px, 8.5vw, 34px); flex-shrink: 0;
+      background: var(--surface2); border: 1px solid #2a2a2a;
       color: var(--text); border-radius: 9px; font-size: 18px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       -webkit-tap-highlight-color: transparent;
     }
     .nav-btn:active { background: var(--surface3); }
-    .week-label { font-size: 12px; color: var(--text-muted); min-width: 106px; text-align: center; font-weight: 500; }
+    .week-label { font-size: clamp(10.5px, 3vw, 12px); color: var(--text-muted); min-width: clamp(70px, 26vw, 106px); text-align: center; font-weight: 500; white-space: nowrap; }
 
     /* ── Day Tabs ── */
     .day-tabs {
-      position: fixed; top: var(--header-h); left: 0; right: 0; height: var(--tabs-h);
-      background: var(--surface); display: flex; overflow-x: auto; scrollbar-width: none;
-      z-index: 99; padding: 8px 10px; gap: 6px; border-bottom: 1px solid #222;
+      position: fixed; top: var(--top-h); left: 0; right: 0; height: var(--tabs-h);
+      background: var(--surface); display: flex; justify-content: center; overflow-x: auto; scrollbar-width: none;
+      z-index: 99; padding: 8px max(8px, var(--sar)) 8px max(8px, var(--sal)); gap: clamp(2px, 1.2vw, 6px);
+      border-bottom: 1px solid #222;
       -webkit-overflow-scrolling: touch;
     }
     .day-tabs::-webkit-scrollbar { display: none; }
     .day-tab {
-      flex: 0 0 auto; min-width: 50px; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; padding: 6px 8px; border-radius: 11px;
+      flex: 1 1 0; min-width: 0; max-width: 72px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 6px 2px; border-radius: 11px;
       cursor: pointer; border: none; background: transparent; gap: 1px;
       -webkit-tap-highlight-color: transparent;
     }
     .day-tab .d-name { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.4px; }
-    .day-tab .d-num  { font-size: 20px; font-weight: 600; color: var(--text-muted); line-height: 1.1; }
+    .day-tab .d-num  { font-size: clamp(17px, 5vw, 20px); font-weight: 600; color: var(--text-muted); line-height: 1.1; }
     .day-tab .d-dot  { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); margin-top: 2px; }
     .day-tab .d-rest { font-size: 9px; margin-top: 2px; }
     .day-tab .d-spacer { height: 7px; }
@@ -185,11 +197,11 @@
     /* ── Main ── */
     main {
       position: fixed;
-      top: calc(var(--header-h) + var(--tabs-h));
-      left: 0; right: 0; bottom: var(--nav-h);
+      top: calc(var(--top-h) + var(--tabs-h));
+      left: 0; right: 0; bottom: var(--bot-h);
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 16px 14px 100px;
+      padding: 16px max(14px, var(--sar)) 100px max(14px, var(--sal));
       overscroll-behavior: contain;
     }
 
@@ -329,9 +341,13 @@
     .empty-icon { font-size: 52px; margin-bottom: 12px; }
     .empty h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; font-weight: 600; }
     .empty p  { font-size: 14px; line-height: 1.6; }
+    @media (max-height: 700px) {
+      .empty { padding: 16px 24px 12px; }
+      .empty-icon { font-size: 40px; margin-bottom: 8px; }
+    }
 
     /* ── Timer FAB ── */
-    .fab-wrap { position: fixed; bottom: calc(var(--nav-h) + 20px); right: 20px; z-index: 200; }
+    .fab-wrap { position: fixed; bottom: calc(var(--bot-h) + 20px); right: calc(20px + var(--sar)); z-index: 200; }
     .fab {
       width: 64px; height: 64px; border-radius: 50%; background: var(--accent); border: none;
       cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -346,6 +362,10 @@
     }
     .fab-icon { font-size: 22px; line-height: 1; }
     .fab-text { font-size: 9px; font-weight: 800; color: #fff; letter-spacing: 0.8px; margin-top: 1px; }
+    @media (max-height: 700px) {
+      .fab { width: 56px; height: 56px; }
+      .fab-wrap { bottom: calc(var(--bot-h) + 14px); right: calc(14px + var(--sar)); }
+    }
 
     /* ── Timer Sheet ── */
     .overlay {
@@ -355,7 +375,7 @@
     .overlay.open { display: flex; align-items: flex-end; }
     .sheet {
       background: var(--surface); border-radius: 22px 22px 0 0; width: 100%;
-      padding: 12px 22px 44px; max-height: 90vh; overflow-y: auto; position: relative;
+      padding: 12px 22px max(44px, calc(20px + var(--sab))); max-height: calc(100% - var(--sat) - 16px); overflow-y: auto; position: relative;
     }
     .sheet-handle { width: 38px; height: 4px; background: #333; border-radius: 2px; margin: 0 auto 10px; }
     .sheet-top-row {
@@ -398,7 +418,7 @@
 
     /* ── Toast notifications ── */
     .toast-container {
-      position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
+      position: fixed; bottom: calc(var(--bot-h) + 52px); left: 50%; transform: translateX(-50%);
       z-index: 999; display: flex; flex-direction: column; align-items: center;
       gap: 8px; pointer-events: none; width: 90%; max-width: 340px;
     }
@@ -443,7 +463,8 @@
 
     /* ── Bottom Navigation ── */
     .bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h);
+      position: fixed; bottom: 0; left: 0; right: 0; height: var(--bot-h);
+      padding: 0 var(--sar) var(--sab) var(--sal);
       background: var(--surface); border-top: 1px solid #222;
       display: flex; z-index: 150;
     }
@@ -460,9 +481,9 @@
 
     /* ── Progress View ── */
     #progressView {
-      position: fixed; top: var(--header-h); left: 0; right: 0; bottom: var(--nav-h);
+      position: fixed; top: var(--top-h); left: 0; right: 0; bottom: var(--bot-h);
       overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-      padding: 16px 14px 24px; display: none; background: var(--bg);
+      padding: 16px max(14px, var(--sar)) 24px max(14px, var(--sal)); display: none; background: var(--bg);
     }
     #progressView.active { display: block; }
     .prog-header {
@@ -507,7 +528,7 @@
     .photo-viewer.open { display: flex; }
     .photo-viewer img { max-width: 100%; max-height: 82vh; object-fit: contain; }
     .viewer-close {
-      position: absolute; top: 16px; right: 16px; width: 36px; height: 36px;
+      position: absolute; top: calc(16px + var(--sat)); right: calc(16px + var(--sar)); width: 36px; height: 36px;
       background: rgba(255,255,255,0.15); border: none; color: #fff; border-radius: 50%;
       font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
       -webkit-tap-highlight-color: transparent;
@@ -523,9 +544,9 @@
 
     /* ── Library View ── */
     #libraryView {
-      position: fixed; top: var(--header-h); left: 0; right: 0; bottom: var(--nav-h);
+      position: fixed; top: var(--top-h); left: 0; right: 0; bottom: var(--bot-h);
       overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-      padding: 16px 14px 24px; display: none; background: var(--bg);
+      padding: 16px max(14px, var(--sar)) 24px max(14px, var(--sal)); display: none; background: var(--bg);
     }
     #libraryView.active { display: block; }
     .lib-header {
@@ -562,7 +583,7 @@
     .tpl-editor-overlay.open { display: flex; }
     .tpl-editor-header {
       display: flex; align-items: center; gap: 10px;
-      padding: 0 16px; height: var(--header-h);
+      padding: var(--sat) var(--gutter-r) 0 var(--gutter-l); height: var(--top-h);
       border-bottom: 1px solid #222; flex-shrink: 0;
     }
     .tpl-name-input {
@@ -576,7 +597,7 @@
     }
     .tpl-editor-body {
       flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
-      padding: 16px 14px 32px;
+      padding: 16px max(14px, var(--sar)) calc(32px + var(--sab)) max(14px, var(--sal));
     }
 
     /* ── Template Picker Sheet ── */
@@ -587,7 +608,7 @@
     .tpl-picker-overlay.open { display: flex; align-items: flex-end; }
     .tpl-picker-sheet {
       background: var(--surface); border-radius: 20px 20px 0 0;
-      width: 100%; max-height: 70vh; overflow-y: auto; padding: 0 0 24px;
+      width: 100%; max-height: 70vh; overflow-y: auto; padding: 0 0 calc(24px + var(--sab));
     }
     .tpl-picker-header {
       display: flex; align-items: center; justify-content: space-between;
@@ -619,9 +640,8 @@
     .use-tpl-btn:active { background: rgba(249,115,22,0.12); }
 
     /* ── Month Calendar ── */
-    @media (max-width: 380px) {
-      .week-nav { gap: 4px; }
-      .week-label { min-width: 84px; font-size: 11px; }
+    @media (max-width: 340px) {
+      .logo { display: none; }
     }
     .week-label.tappable { cursor: pointer; -webkit-tap-highlight-color: transparent; }
     .week-label.tappable:active { opacity: 0.6; }
@@ -630,7 +650,7 @@
       background: var(--bg); flex-direction: column;
     }
     .cal-overlay.open { display: flex; }
-    .cal-top { flex-shrink: 0; padding: 10px 0 0; border-bottom: 0.5px solid #2a2a2a; }
+    .cal-top { flex-shrink: 0; padding: calc(10px + var(--sat)) var(--sar) 0 var(--sal); border-bottom: 0.5px solid #2a2a2a; }
     .cal-topbar { padding: 0 16px; }
     .cal-back-pill {
       display: inline-flex; align-items: center; gap: 6px;
@@ -645,10 +665,10 @@
     .cal-dow-row span { font-size: 11px; font-weight: 600; color: var(--text-muted); text-align: center; }
     .cal-scroll {
       flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative;
-      padding-bottom: calc(96px + env(safe-area-inset-bottom));
+      padding-bottom: calc(96px + var(--sab));
       overscroll-behavior: contain;
     }
-    .cal-month { padding-top: 10px; }
+    .cal-month { padding: 10px var(--sar) 0 var(--sal); }
     .cal-row { display: grid; grid-template-columns: repeat(7, 1fr); }
     .cal-mlabel { font-size: 20px; font-weight: 700; padding: 0 0 8px 10px; }
     .cal-day {
@@ -671,7 +691,7 @@
     .cal-day.planned .c-pill { border: 1.5px solid var(--accent); }
     .cal-day.rest .c-pill { background: var(--rest-color); }
     .cal-today-pill {
-      position: absolute; left: 20px; bottom: calc(20px + env(safe-area-inset-bottom));
+      position: absolute; left: calc(20px + var(--sal)); bottom: calc(20px + var(--sab));
       background: rgba(40,40,40,0.85); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
       border: 1px solid #333; color: var(--text); border-radius: 999px;
       padding: 13px 26px; font-size: 17px; font-weight: 600; font-family: inherit;
@@ -699,7 +719,8 @@
       50%      { box-shadow: 0 0 0 8px rgba(249,115,22,0.08), 0 0 40px 8px var(--accent-glow); }
     }
     .tour-card {
-      position: fixed; left: 16px; width: calc(100% - 32px); max-width: 360px;
+      position: fixed; left: 16px; width: calc(100% - 32px - var(--sal) - var(--sar)); max-width: 360px;
+      overflow-y: auto; overscroll-behavior: contain;
       background: rgba(30,30,30,0.92); border: 1px solid #333; border-radius: 22px;
       -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
       padding: 20px 20px 16px; box-shadow: 0 16px 48px rgba(0,0,0,0.6);
@@ -722,7 +743,7 @@
     .tour-btn.next { background: var(--accent); color: #fff; box-shadow: 0 4px 16px var(--accent-glow); }
     .tour-btn:active { opacity: 0.85; }
     .tour-skip {
-      position: fixed; top: calc(12px + env(safe-area-inset-top)); right: 14px;
+      position: fixed; top: calc(12px + var(--sat)); right: calc(14px + var(--sar));
       background: rgba(40,40,40,0.8); border: 1px solid #333; color: #ccc; border-radius: 999px;
       padding: 7px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
       -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); -webkit-tap-highlight-color: transparent;
@@ -2157,10 +2178,23 @@ function endTour() {
     else db[tour.demoKey] = tour.demoOrig;
   }
   tour = null;
+  document.getElementById('main').style.paddingTop = '';
+  document.getElementById('fabBtn').parentElement.style.visibility = '';
   tourEl.classList.remove('open');
   tourCard.classList.add('hidden');
   markTourDone();
   render();
+}
+
+// Screen area not covered by the notch / status bar / home indicator, in px
+function tourSafeArea() {
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;' +
+    'top:var(--sat);bottom:var(--sab);left:var(--sal);right:var(--sar)';
+  document.body.appendChild(probe);
+  const r = probe.getBoundingClientRect();
+  probe.remove();
+  return { top: r.top, bottom: r.bottom, left: r.left, right: r.right };
 }
 
 function tourTargetRect(sel) {
@@ -2168,31 +2202,71 @@ function tourTargetRect(sel) {
   if (!el) return null;
   const r = el.getBoundingClientRect();
   if (!r.width || !r.height) return null;
-  const pad = 6;
-  return { x: r.left - pad, y: r.top - pad, w: r.width + pad * 2, h: r.height + pad * 2 };
+  // Pad around the element, but keep the whole ring on screen so it's never clipped
+  const pad = 6, edge = 4, vw = window.innerWidth, vh = window.innerHeight;
+  const x1 = Math.max(edge, r.left - pad), y1 = Math.max(edge, r.top - pad);
+  const x2 = Math.min(vw - edge, r.right + pad), y2 = Math.min(vh - edge, r.bottom + pad);
+  return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+}
+
+function fillTourCard(card, i) {
+  const step = tour.steps[i], q = sel => card.querySelector(sel);
+  q('.tour-step').textContent = `${i + 1} of ${tour.steps.length}`;
+  q('.tour-title').textContent = step.title;
+  q('.tour-text').textContent = step.text;
+  q('.tour-dots').innerHTML = tour.steps.map((_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('');
+  q('.tour-btn.back').style.display = i === 0 ? 'none' : '';
+  q('.tour-btn.next').textContent = i === 0 ? 'Start' : i === tour.steps.length - 1 ? "Let's go 💪" : 'Next';
+}
+
+// Height the card will have for step i, measured on an invisible copy
+function measureTourCard(i) {
+  const c = tourCard.cloneNode(true);
+  c.removeAttribute('id');
+  c.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+  c.classList.remove('hidden');
+  Object.assign(c.style, { visibility: 'hidden', top: '0', maxHeight: '' });
+  fillTourCard(c, i);
+  tourEl.appendChild(c);
+  const h = c.offsetHeight;
+  c.remove();
+  return h;
+}
+
+// Vertical band the card may occupy: below the Skip button, above the home indicator
+function tourBounds() {
+  const safe = tourSafeArea();
+  return { safe, minTop: safe.top + 56, maxBottom: safe.bottom - 12, gap: 14 };
 }
 
 function showTourStep(i) {
   const step = tour.steps[i];
   tour.idx = i;
-  if (step.target) {
-    const el = document.querySelector(step.target);
-    if (el && el.closest('main')) el.scrollIntoView({ block: 'center' });
+  const main = document.getElementById('main');
+  main.style.paddingTop = '';
+  const el = step.target && document.querySelector(step.target);
+  if (el && el.closest('main')) {
+    el.scrollIntoView({ block: 'end' });
+    // Short screens: if the card fits neither above nor below, push the page content down to make room above
+    const r = tourTargetRect(step.target), ch = measureTourCard(i), { minTop, maxBottom, gap } = tourBounds();
+    if (r && r.y - gap - ch < minTop && r.y + r.h + gap + ch > maxBottom) {
+      main.style.paddingTop = `${16 + minTop + ch + gap - r.y}px`;
+      el.scrollIntoView({ block: 'end' });
+    }
   }
   const vw = window.innerWidth, vh = window.innerHeight;
   const to = (step.target && tourTargetRect(step.target)) || { x: vw / 2, y: vh / 2, w: 0, h: 0 };
+
+  // On small screens the floating timer button can sit on top of the spotlit element — hide it then
+  const fab = document.getElementById('fabBtn').parentElement, fr = fab.getBoundingClientRect();
+  const overlaps = fr.left < to.x + to.w && fr.right > to.x && fr.top < to.y + to.h && fr.bottom > to.y;
+  fab.style.visibility = step.target !== '#fabBtn' && overlaps ? 'hidden' : '';
 
   // Fade the card out, glide the spotlight, then bring the card back in its new spot
   tourCard.classList.add('hidden');
   tourRing.style.opacity = step.target ? '1' : '0';
   tweenTourRect(tour.rect || { x: vw / 2, y: vh / 2, w: 0, h: 0 }, to, () => {
-    document.getElementById('tourStep').textContent = `${i + 1} of ${tour.steps.length}`;
-    document.getElementById('tourTitle').textContent = step.title;
-    document.getElementById('tourText').textContent = step.text;
-    document.getElementById('tourDots').innerHTML = tour.steps.map((_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('');
-    document.getElementById('tourBack').style.display = i === 0 ? 'none' : '';
-    document.getElementById('tourNext').textContent =
-      i === 0 ? 'Start' : i === tour.steps.length - 1 ? "Let's go 💪" : 'Next';
+    fillTourCard(tourCard, i);
     placeTourCard(step.target ? to : null);
     tourCard.classList.remove('hidden');
   });
@@ -2228,14 +2302,23 @@ function drawTourRect(r) {
 }
 
 function placeTourCard(r) {
-  const vh = window.innerHeight, vw = window.innerWidth;
-  const cw = tourCard.offsetWidth, ch = tourCard.offsetHeight, gap = 16;
-  tourCard.style.left = `${(vw - cw) / 2}px`;
+  const { safe, minTop, maxBottom, gap } = tourBounds();
+  tourCard.style.maxHeight = `${maxBottom - minTop}px`;
+  const cw = tourCard.offsetWidth, ch = tourCard.offsetHeight;
+  tourCard.style.left = `${safe.left + (safe.right - safe.left - cw) / 2}px`;
+
   let top;
-  if (!r) top = (vh - ch) / 2;
-  else if (r.y + r.h / 2 < vh / 2) top = r.y + r.h + gap;   // target in top half → card below
-  else top = r.y - ch - gap;                                 // target in bottom half → card above
-  tourCard.style.top = `${Math.min(Math.max(12, top), vh - ch - 12)}px`;
+  if (!r) top = minTop + (maxBottom - minTop - ch) / 2;
+  else {
+    const below = maxBottom - (r.y + r.h + gap), above = (r.y - gap) - minTop;
+    const preferBelow = r.y + r.h / 2 < window.innerHeight / 2;
+    if (preferBelow && below >= ch)      top = r.y + r.h + gap;
+    else if (!preferBelow && above >= ch) top = r.y - gap - ch;
+    else if (below >= ch)                 top = r.y + r.h + gap;
+    else if (above >= ch)                 top = r.y - gap - ch;
+    else top = below >= above ? maxBottom - ch : minTop;   // no clean fit: sit in the roomier side
+  }
+  tourCard.style.top = `${Math.min(Math.max(minTop, top), maxBottom - ch)}px`;
 }
 
 document.getElementById('tourNext').addEventListener('click', () => {
