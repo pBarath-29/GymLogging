@@ -13,7 +13,7 @@ A few things that make it useful in practice:
 - If you do the same routine every week, you can copy last week's workout for that day in one tap.
 - Exercise names are suggested as you type, from your own history and a list of common lifts.
 - When a set beats your previous best for that exercise it is marked as a PR. Finishing every set of the day opens a summary.
-- Any trained day can be shared as an image (Share workout): Dark, Orange, Photo (your own photo behind the stats, kept on the device) or Sticker (transparent, for placing over a story), in Story (9:16) or Square format.
+- Any trained day can be shared as an image (Share workout): Dark, Orange or Photo (your own photo behind the stats, kept on the device), in Story (9:16) or Square format.
 - Bodyweight exercises (no weight entered, e.g. pull-ups) count by reps for PRs, charts and summaries.
 - Muscle groups and exercises can be reordered with up/down arrows while editing a day or a collection.
 - The Progress tab shows workouts this week, your weekly streak, a strength chart per exercise (3M / 6M / 1Y / All), a body weight log with its own chart, and your latest progress photos. The Photos page shows every photo grouped by month, loads them 12 at a time, and lets you compare any two side by side.

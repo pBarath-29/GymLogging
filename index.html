@@ -568,10 +568,6 @@
       max-width: 100%; max-height: 100%; border-radius: 16px; box-shadow: 0 16px 50px rgba(0,0,0,0.6);
       background: #0b0b0b;
     }
-    /* Checkerboard behind the transparent sticker so it's clear what will be see-through */
-    .studio-stage.is-sticker canvas {
-      background: repeating-conic-gradient(#2a2a2a 0% 25%, #1c1c1c 0% 50%) 50% / 28px 28px;
-    }
     .studio-empty {
       display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center;
       gap: 14px; text-align: center; color: #ddd; font-size: 15px; line-height: 1.5; pointer-events: none;
@@ -579,7 +575,7 @@
     .studio-empty label { pointer-events: auto; }
     .studio-stage.needs-photo .studio-empty { display: flex; }
     .studio-controls { flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
-    .studio-styles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .studio-styles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .studio-styles button {
       display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px 9px;
       background: var(--surface); border: 1.5px solid #262626; border-radius: 12px; color: var(--text-muted);
@@ -590,7 +586,6 @@
     .sw-dark { background: radial-gradient(circle at 75% 25%, #f97316 0%, #4a1d04 45%, #0b0b0b 75%); }
     .sw-orange { background: linear-gradient(135deg, #ff9a3c, #ea580c); }
     .sw-photo { background: linear-gradient(180deg, #7c8a99 0%, #3a4048 55%, #0b0b0b 100%); }
-    .sw-sticker { background: repeating-conic-gradient(#555 0% 25%, #2a2a2a 0% 50%) 50% / 10px 10px; }
     .studio-row { display: flex; gap: 10px; align-items: center; }
     .studio-format { flex: 1; }
     .studio-format button { padding: 9px; font-size: 14px; }
@@ -1246,7 +1241,6 @@
         <button data-style="dark"><i class="sw sw-dark"></i>Dark</button>
         <button data-style="orange"><i class="sw sw-orange"></i>Orange</button>
         <button data-style="photo"><i class="sw sw-photo"></i>Photo</button>
-        <button data-style="sticker"><i class="sw sw-sticker"></i>Sticker</button>
       </div>
       <div class="studio-row">
         <div class="seg studio-format" id="studioFormat">
@@ -3630,7 +3624,7 @@ function downloadBlob(blob, filename) {
 const studio = { key: null, style: 'dark', format: 'story', photo: null, photoUrl: null, pick: null };
 try {
   const saved = JSON.parse(localStorage.getItem('glog_share_style') || '{}');
-  if (['dark', 'orange', 'photo', 'sticker'].includes(saved.style)) studio.style = saved.style;
+  if (['dark', 'orange', 'photo'].includes(saved.style)) studio.style = saved.style;
   if (['story', 'square'].includes(saved.format)) studio.format = saved.format;
 } catch (_) {}
 
@@ -3729,16 +3723,12 @@ function drawStudio(c, data, style, format, photo) {
     lg.addColorStop(0, 'rgba(0,0,0,0.55)'); lg.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = lg; g.fillRect(0, 0, W, 320);
   }
-  if (style === 'sticker') { g.shadowColor = 'rgba(0,0,0,0.45)'; g.shadowBlur = 14; g.shadowOffsetY = 2; }
   if (style === 'photo')   { g.shadowColor = 'rgba(0,0,0,0.4)';  g.shadowBlur = 10; g.shadowOffsetY = 1; }
 
   // ── header: wordmark + date
-  const sticker = style === 'sticker';
-  if (!sticker) {
-    const top = P + 52;
-    text('GYMLOG', P, top, anton(54), accent, 'left', 3);
-    text(`${data.weekday.toUpperCase()}  ·  ${data.shortDate.toUpperCase()}`, W - P, top - 4, sans(26, 700), muted, 'right', 2);
-  }
+  const top = P + 52;
+  text('GYMLOG', P, top, anton(54), accent, 'left', 3);
+  text(`${data.weekday.toUpperCase()}  ·  ${data.shortDate.toUpperCase()}`, W - P, top - 4, sans(26, 700), muted, 'right', 2);
 
   // ── blocks are stacked from the bottom up so the photo (or glow) stays visible at the top
   const Z = story
@@ -3746,7 +3736,7 @@ function drawStudio(c, data, style, format, photo) {
     : { liftH: 56, name: 29, val: 38, prW: 56, prH: 30, prF: 18, stat: 84,  statLbl: 92,  statStep: 142, hero: 150, heroU: 48, heroLbl: 160, heroStep: 210, title: 80 };
   const { lifts, more } = data.share;
   let y = H - P;
-  if (story && !sticker) {
+  if (story) {
     const left = data.streak >= 2 ? `${data.streak}-WEEK STREAK` : 'TRAINED WITH GYMLOG';
     text(left, P, y, sans(26, 800), muted, 'left', 3);
     text(location.host, W - P, y, sans(24, 600), muted, 'right');
@@ -3758,20 +3748,23 @@ function drawStudio(c, data, style, format, photo) {
     text(`+ ${more} MORE ${more === 1 ? 'EXERCISE' : 'EXERCISES'}`, P, y - 6, sans(Z.name - 8, 800), muted, 'left', 3);
     y -= Z.liftH;
   }
+  // Columns: name | PR tag | value. Every value starts at the same x (set by the widest one),
+  // and every PR tag sits in the same spot just before it.
+  const valFont = anton(Z.val), nameFont = sans(Z.name, 600);
+  const vals = lifts.map(it => setsText(it.sets).toUpperCase());
+  const valX = W - P - Math.max(0, ...vals.map(v => width(v, valFont, 1)));
+  const anyPr = lifts.some(it => it.pr);
+  const prX = valX - 18 - Z.prW;
+  const nameMax = (anyPr ? prX : valX) - 20 - P;
   for (let i = lifts.length - 1; i >= 0; i--) {
-    const it = lifts[i], valFont = anton(Z.val);
-    const val = setsText(it.sets).toUpperCase();
-    const vw = width(val, valFont, 1);
-    text(val, W - P, y, valFont, ink, 'right', 1);
-    let right = W - P - vw - 20;
+    const it = lifts[i];
+    text(vals[i], valX, y, valFont, ink, 'left', 1);
     if (it.pr) {
       const top = y - Z.val * 0.74;
-      pill(right - Z.prW, top, Z.prW, Z.prH, accent);
-      text('PR', right - Z.prW / 2, top + Z.prH / 2 + Z.prF * 0.36, sans(Z.prF, 900), style === 'orange' ? '#ffa04a' : '#fff', 'center', 1);
-      right -= Z.prW + 18;
+      pill(prX, top, Z.prW, Z.prH, accent);
+      text('PR', prX + Z.prW / 2, top + Z.prH / 2 + Z.prF * 0.36, sans(Z.prF, 900), style === 'orange' ? '#ffa04a' : '#fff', 'center', 1);
     }
-    const nameFont = sans(Z.name, 600);
-    text(fit(it.name, nameFont, right - P), P, y - 4, nameFont, ink);
+    text(fit(it.name, nameFont, nameMax), P, y - 4, nameFont, ink);
     y -= Z.liftH;
   }
   if (lifts.length || more) {
@@ -3823,7 +3816,7 @@ function drawStudio(c, data, style, format, photo) {
   const kickerY = y + tSize * 0.98 - tSize - 14;
 
   // Story cards in Dark/Orange have open space under the header: fill it with a giant outlined workout number.
-  // Elsewhere (the photo needs that space; square and sticker are tight) the number joins the small line above the title.
+  // Elsewhere (the photo needs that space; square is tight) the number joins the small line above the title.
   const regionTop = P + 52 + 70, regionBottom = kickerY - 64;
   const numSize = Math.min(430, (regionBottom - regionTop - 40) / 0.9);
   const giant = story && (style === 'dark' || style === 'orange') && data.number > 0 && numSize >= 180;
@@ -3838,31 +3831,15 @@ function drawStudio(c, data, style, format, photo) {
     g.restore();
   }
   // The line above the title: just the workout number (left out when the giant number already shows it)
-  const kicker = sticker ? `GYMLOG  ·  #${data.number}  ·  ${data.shortDate.toUpperCase()}`
-               : giant || !data.number ? '' : `WORKOUT #${data.number.toLocaleString()}`;
+  const kicker = giant || !data.number ? '' : `WORKOUT #${data.number.toLocaleString()}`;
   if (kicker) text(kicker, P, kickerY, sans(story ? 26 : 22, 800), accent, 'left', 4);
   g.shadowColor = 'transparent';
-
-  // A sticker is only as big as its content, so it drops neatly onto a story
-  if (sticker) {
-    const img = g.getImageData(0, 0, W, H), a = img.data;
-    let x0 = W, y0 = H, x1 = 0, y1 = 0;
-    for (let yy = 0; yy < H; yy += 2) for (let xx = 0; xx < W; xx += 2) {
-      if (a[(yy * W + xx) * 4 + 3] > 10) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (yy < y0) y0 = yy; if (yy > y1) y1 = yy; }
-    }
-    const m = 36;
-    x0 = Math.max(0, x0 - m); y0 = Math.max(0, y0 - m); x1 = Math.min(W, x1 + m); y1 = Math.min(H, y1 + m);
-    const cut = g.getImageData(x0, y0, x1 - x0, y1 - y0);
-    c.width = x1 - x0; c.height = y1 - y0;
-    c.getContext('2d').putImageData(cut, 0, 0);
-  }
 }
 
 function renderStudio() {
   const c = document.getElementById('studioCanvas'), stage = document.getElementById('studioStage');
   const needsPhoto = studio.style === 'photo' && !studio.photo;
-  // A sticker always uses the roomier story layout; it is trimmed to its content anyway
-  const format = studio.style === 'sticker' ? 'story' : studio.format;
+  const format = studio.format;
   const data = shareData(studio.key);
   data.share = shareLifts(data.items, SHARE_MAX[format], studio.pick);
   drawStudio(c, data, studio.style, format, studio.photo);
@@ -3871,18 +3848,15 @@ function renderStudio() {
     total ? `Choose exercises · ${shown} of ${total} shown` : 'Choose exercises';
   document.getElementById('btnStudioPick').style.display = total > 1 ? '' : 'none';
   stage.classList.toggle('needs-photo', needsPhoto);
-  stage.classList.toggle('is-sticker', studio.style === 'sticker');
   c.style.visibility = needsPhoto ? 'hidden' : '';
   document.querySelectorAll('#studioStyles button').forEach(b => b.classList.toggle('sel', b.dataset.style === studio.style));
   document.querySelectorAll('#studioFormat button').forEach(b => b.classList.toggle('sel', b.dataset.format === studio.format));
   document.getElementById('studioPhotoBtn').classList.toggle('show', studio.style === 'photo' && !!studio.photo);
-  document.getElementById('studioFormat').style.visibility = studio.style === 'sticker' ? 'hidden' : '';
   document.getElementById('btnStudioShare').disabled = needsPhoto;
   document.getElementById('studioHint').textContent = {
     dark: 'Ready for your story or feed.',
     orange: 'Ready for your story or feed.',
     photo: studio.photo ? 'Your photo stays on this phone — it isn’t uploaded to GymLog.' : '',
-    sticker: 'See-through background. Save it, then add it to your story as a sticker on top of any photo or video.',
   }[studio.style];
   try { localStorage.setItem('glog_share_style', JSON.stringify({ style: studio.style, format: studio.format })); } catch (_) {}
 }
@@ -3942,7 +3916,7 @@ document.getElementById('btnStudioShare').addEventListener('click', async () => 
 });
 // ── Choosing which exercises appear on the card ──
 function openPicker() {
-  const format = studio.style === 'sticker' ? 'story' : studio.format, max = SHARE_MAX[format];
+  const format = studio.format, max = SHARE_MAX[format];
   const data = shareData(studio.key);
   const current = new Set(shareLifts(data.items, max, studio.pick).lifts.map(it => it.i));
   const list = document.getElementById('pickList');
