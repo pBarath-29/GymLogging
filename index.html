@@ -595,6 +595,27 @@
       font-family: inherit; cursor: pointer; padding: 6px 2px; -webkit-tap-highlight-color: transparent;
     }
     .compare-btn { margin-top: 12px; }
+    .prog-empty-add { display: inline-block; margin-top: 16px; }
+    .prog-header { min-height: 37px; }
+
+    /* ── Picking two photos to compare ── */
+    .photo-card.selectable img { cursor: pointer; }
+    .photo-card.selected { outline: 3px solid var(--accent); outline-offset: -3px; }
+    .photo-card.selected img { opacity: 0.85; }
+    .sel-badge {
+      position: absolute; top: 6px; left: 6px; width: 26px; height: 26px; border-radius: 50%;
+      background: var(--accent); color: #fff; font-size: 13px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; pointer-events: none;
+    }
+    .select-bar {
+      display: none; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0;
+      padding: 12px max(16px, var(--sar)) calc(12px + var(--sab)) max(16px, var(--sal));
+      background: var(--surface); border-top: 1px solid #222;
+    }
+    .select-bar.open { display: flex; }
+    .select-bar span { font-size: 14px; color: var(--text-muted); }
+    .select-bar .t-btn { flex: 0 0 auto; padding: 12px 26px; }
+    .select-bar .t-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     /* ── All photos + compare pages ── */
     .gallery-overlay { display: none; position: fixed; inset: 0; z-index: 400; background: var(--bg); flex-direction: column; }
@@ -1174,7 +1195,6 @@
 <div id="progressView">
   <div class="prog-header">
     <h2 class="prog-title">Progress</h2>
-    <label class="add-photo-btn" for="photoInput">+ Add Photo</label>
     <input type="file" id="photoInput" accept="image/*" style="display:none">
   </div>
   <div class="stat-row" id="statRow"></div>
@@ -1194,7 +1214,8 @@
   <div class="prog-empty" id="progEmpty">
     <div class="empty-icon">📷</div>
     <h3>No photos yet</h3>
-    <p>Tap "Add Photo" to start<br>tracking your progress.</p>
+    <p>Take one now and compare as you go.</p>
+    <label class="add-photo-btn prog-empty-add" for="photoInput">+ Add your first photo</label>
   </div>
 </div>
 
@@ -1211,6 +1232,10 @@
     </div>
   </div>
   <div class="gallery-body" id="galleryBody"></div>
+  <div class="select-bar" id="selectBar">
+    <span id="selectCount"></span>
+    <button class="t-btn primary" id="btnCompareSelected" disabled>Compare</button>
+  </div>
 </div>
 
 <!-- ── Compare Page ── -->
@@ -3155,8 +3180,17 @@ function photoCard(p) {
   const card = elMk('div', 'photo-card');
   const img = document.createElement('img');
   img.src = p.url; img.loading = 'lazy'; img.alt = `Progress photo, ${p.dateStr}`;
+  card.appendChild(img);
+  card.appendChild(elMk('div', 'photo-date', p.dateStr));
+  if (selectMode) {
+    // Picking photos to compare: a tap selects instead of opening the photo
+    const n = selected.indexOf(p.id);
+    card.classList.add('selectable');
+    if (n >= 0) { card.classList.add('selected'); card.appendChild(elMk('span', 'sel-badge', String(n + 1))); }
+    img.addEventListener('click', () => toggleSelected(p.id));
+    return card;
+  }
   img.addEventListener('click', () => openViewer(p));
-  const date = elMk('div', 'photo-date', p.dateStr);
   const del = elMk('button', 'photo-del', '✕');
   del.setAttribute('aria-label', 'Delete photo');
   del.addEventListener('click', async e => {
@@ -3164,7 +3198,7 @@ function photoCard(p) {
     if (!confirm('Delete this photo?')) return;
     await deletePhoto(p);
   });
-  card.appendChild(img); card.appendChild(date); card.appendChild(del);
+  card.appendChild(del);
   return card;
 }
 
@@ -3188,17 +3222,36 @@ function renderPhotoPreview() {
     return;
   }
   empty.style.display = 'none';
+  const wasSelecting = selectMode;
+  selectMode = false;   // the preview never selects, even while the Photos page is picking
   photos.slice(0, 4).forEach(p => grid.appendChild(photoCard(p)));
+  selectMode = wasSelecting;
 }
 
 // ── All photos page: grouped by month, next page loads as you near the bottom ──
 let galleryObserver = null;
+let selectMode = false;   // picking two photos to compare
+let selected = [];        // ids, in the order they were tapped
+
+function setSelectMode(on) {
+  selectMode = on; selected = [];
+  renderGallery();
+}
+
+function toggleSelected(id) {
+  const i = selected.indexOf(id);
+  if (i >= 0) selected.splice(i, 1);
+  else if (selected.length < 2) selected.push(id);
+  else { showToast('Pick 2 photos — tap one to unselect it', 'warn'); return; }
+  renderGallery();
+}
 
 function openGallery() {
   document.getElementById('galleryOverlay').classList.add('open');
   renderGallery();
 }
 function closeGallery() {
+  selectMode = false; selected = [];
   document.getElementById('galleryOverlay').classList.remove('open');
   if (galleryObserver) { galleryObserver.disconnect(); galleryObserver = null; }
 }
@@ -3208,8 +3261,14 @@ function renderGallery() {
   if (!overlay.classList.contains('open')) return;
   const body = document.getElementById('galleryBody'), keep = body.scrollTop;
   const n = knownPhotoCount();
-  document.getElementById('galleryTitle').textContent = n != null ? `Photos (${n})` : 'Photos';
-  document.getElementById('btnGalleryCompare').style.display = canCompare() ? '' : 'none';
+  document.getElementById('galleryTitle').textContent = selectMode ? 'Pick 2 photos' : n != null ? `Photos (${n})` : 'Photos';
+  const cmp = document.getElementById('btnGalleryCompare');
+  cmp.textContent = selectMode ? 'Cancel' : 'Compare';
+  cmp.style.display = selectMode || photos.length >= 2 ? '' : 'none';
+  document.querySelector('#galleryOverlay .head-actions .add-photo-btn').style.display = selectMode ? 'none' : '';
+  document.getElementById('selectBar').classList.toggle('open', selectMode);
+  document.getElementById('selectCount').textContent = `${selected.length} of 2 selected`;
+  document.getElementById('btnCompareSelected').disabled = selected.length !== 2;
   body.innerHTML = '';
   if (galleryObserver) { galleryObserver.disconnect(); galleryObserver = null; }
   if (!photos.length) {
@@ -3239,20 +3298,33 @@ function renderGallery() {
   body.scrollTop = keep;
 }
 
-// ── Compare: first photo next to the latest ──
-function openCompare() {
-  if (!canCompare()) return;
-  const first = firstPhoto, latest = photos[0];
+// ── Compare two photos side by side, earlier on the left ──
+let comparePair = [];   // ids of the two photos on screen
+
+function compareFirstLatest() {
+  if (canCompare()) openCompare(firstPhoto, photos[0], ['First', 'Latest']);
+}
+
+function compareSelected() {
+  const two = selected.map(id => photos.find(p => p.id === id)).filter(Boolean);
+  if (two.length !== 2) return;
+  two.sort((a, b) => a.timestamp - b.timestamp);
+  openCompare(two[0], two[1], ['Before', 'After']);
+}
+
+function openCompare(first, latest, labels) {
+  comparePair = [first.id, latest.id];
   const days = Math.round((latest.timestamp - first.timestamp) / 864e5);
   const months = Math.round(days / 30.4);
   const gap =
-    days < 60 ? `${days} ${days === 1 ? 'day' : 'days'} apart`
+    days === 0 ? 'Same day'
+    : days < 60 ? `${days} ${days === 1 ? 'day' : 'days'} apart`
     : months < 24 ? `${months} months apart`
     : `${(days / 365).toFixed(1)} years apart`;
   const body = document.getElementById('compareBody');
   body.innerHTML = '';
   body.appendChild(elMk('div', 'compare-gap', gap));
-  [[first, 'First'], [latest, 'Latest']].forEach(([p, label]) => {
+  [[first, labels[0]], [latest, labels[1]]].forEach(([p, label]) => {
     const col = elMk('div', 'compare-col');
     const img = document.createElement('img');
     img.src = p.url; img.alt = `${label} photo, ${p.dateStr}`;
@@ -3273,8 +3345,9 @@ function renderPhotosEverywhere() {
 
 document.getElementById('btnSeeAllPhotos').addEventListener('click', openGallery);
 document.getElementById('btnCloseGallery').addEventListener('click', closeGallery);
-document.getElementById('btnCompare').addEventListener('click', openCompare);
-document.getElementById('btnGalleryCompare').addEventListener('click', openCompare);
+document.getElementById('btnCompare').addEventListener('click', compareFirstLatest);
+document.getElementById('btnGalleryCompare').addEventListener('click', () => setSelectMode(!selectMode));
+document.getElementById('btnCompareSelected').addEventListener('click', compareSelected);
 document.getElementById('btnCloseCompare').addEventListener('click', () => document.getElementById('compareOverlay').classList.remove('open'));
 
 // Resize + compress image → base64 JPEG (keeps Firestore doc well under 1 MB)
@@ -3336,9 +3409,8 @@ async function deletePhoto(p) {
     if (!photosAll) loadFirstPhoto().then(renderPhotosEverywhere);
   }
   renderPhotosEverywhere();
-  if (document.getElementById('compareOverlay').classList.contains('open')) {
-    if (canCompare()) openCompare(); else document.getElementById('compareOverlay').classList.remove('open');
-  }
+  selected = selected.filter(id => id !== p.id);
+  if (comparePair.includes(p.id)) document.getElementById('compareOverlay').classList.remove('open');
   showToast('Photo deleted', 'success');
 }
 
