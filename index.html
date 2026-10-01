@@ -681,6 +681,13 @@
       font-weight: 700; font-family: inherit; outline: none; min-width: 0;
     }
     .tpl-name-input::placeholder { color: var(--text-dim); }
+    .trash-btn {
+      width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px; border: none; cursor: pointer;
+      background: rgba(239,68,68,0.08); color: #ef4444; display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .trash-btn:active { background: rgba(239,68,68,0.2); }
+    .trash-btn svg { width: 18px; height: 18px; }
     .tpl-del-btn {
       background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px;
       -webkit-tap-highlight-color: transparent; opacity: 0.6; flex-shrink: 0;
@@ -1062,7 +1069,7 @@
     <button class="back-btn" id="btnCloseTplEditor">&#8592;</button>
     <input class="tpl-name-input" id="tplNameInput" placeholder="Collection name…" maxlength="60">
     <button class="tpl-del-btn" id="btnShareTpl" title="Share collection">🔗</button>
-    <button class="tpl-del-btn" id="btnDeleteTpl" title="Delete collection">🗑</button>
+    <button class="trash-btn" id="btnDeleteTpl" title="Delete collection" aria-label="Delete collection"></button>
   </div>
   <div class="tpl-editor-body" id="tplEditorBody"></div>
 </div>
@@ -2386,9 +2393,13 @@ function renderLibrary() {
   templates.forEach(tpl => {
     const { card, body } = tplCard(tpl, 'No groups yet');
     const edit = elMk('button', 'tpl-card-edit', '✏️'); edit.title = 'Edit';
+    const del  = elMk('button', 'trash-btn'); del.title = 'Delete'; del.setAttribute('aria-label', 'Delete');
+    del.innerHTML = TRASH_SVG;
     body.addEventListener('click', () => openTplEditor(tpl.id));
     edit.addEventListener('click', () => openTplEditor(tpl.id));
+    del.addEventListener('click', () => deleteTpl(tpl.id));
     card.appendChild(edit);
+    card.appendChild(del);
     list.appendChild(card);
   });
 
@@ -2410,6 +2421,11 @@ function renderLibrary() {
   });
   starters.appendChild(sList);
 }
+
+// Outlined bin icon; the 🗑 emoji draws almost black on the dark theme
+const TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg>';
+document.getElementById('btnDeleteTpl').innerHTML = TRASH_SVG;
 
 const tplGroupNames = tpl => (tpl.groups || []).map(g => g.name).filter(Boolean).join(' · ');
 
