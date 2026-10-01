@@ -860,7 +860,18 @@
     }
     .chart-tip b { display: block; font-size: 14px; color: var(--text); font-weight: 700; }
     .chart-empty { font-size: 13px; color: var(--text-muted); line-height: 1.6; padding: 14px 0 6px; text-align: center; }
-    .chart-table { margin-top: 10px; border-top: 1px solid #222; }
+    .chart-ranges { display: flex; gap: 6px; margin: 6px 0 10px; }
+    .chart-range {
+      flex: 1; background: var(--surface2); border: 1px solid #2e2e2e; color: var(--text-muted);
+      border-radius: 9px; padding: 7px 0; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .chart-range.sel { border-color: var(--accent); color: var(--accent); background: rgba(249,115,22,0.08); }
+    .chart-table-label {
+      font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;
+      letter-spacing: 0.8px; margin-top: 14px;
+    }
+    .chart-table { margin-top: 6px; border-top: 1px solid #222; }
     .chart-table div {
       display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted);
       padding: 7px 2px; border-bottom: 1px solid #1e1e1e; font-variant-numeric: tabular-nums;
@@ -2813,6 +2824,10 @@ document.getElementById('bnavLibrary').addEventListener('click', () => switchTab
 let photos = [];
 let photosLoaded = false, photosLoading = false;
 let chartEx = null; // exercise (lowercase name) shown in the strength chart
+const CHART_RANGES = { '3M': 91, '6M': 182, '1Y': 365, 'All': 0 };   // days back; 0 = everything
+const RANGE_WORDS  = { '3M': '3 months', '6M': '6 months', '1Y': 'year', 'All': 'while' };
+let chartRange = '3M';
+try { const r = localStorage.getItem('glog_chart_range'); if (r in CHART_RANGES) chartRange = r; } catch (_) {}
 
 function switchTab(tab) {
   const isWorkout  = tab === 'workout';
@@ -2886,8 +2901,34 @@ function renderChart() {
   if (!exHist.has(chartEx)) chartEx = list[0][0];
   list.forEach(([id, h]) => { const o = elMk('option', '', h.name); o.value = id; o.selected = id === chartEx; sel.appendChild(o); });
 
-  const pts = exHist.get(chartEx).sessions;
+  // Time range. It starts on 3 months because recent progress is what people look for;
+  // with years of history, "All" would squeeze the last few weeks into a sliver.
+  const rangeRow = elMk('div', 'chart-ranges');
+  Object.keys(CHART_RANGES).forEach(r => {
+    const b = elMk('button', `chart-range${r === chartRange ? ' sel' : ''}`, r);
+    b.addEventListener('click', () => {
+      chartRange = r;
+      try { localStorage.setItem('glog_chart_range', r); } catch (_) {}
+      renderChart();
+    });
+    rangeRow.appendChild(b);
+  });
+  body.appendChild(rangeRow);
+
+  const days = CHART_RANGES[chartRange], cutoff = days ? dateKey(addDays(new Date(), -days)) : '';
+  const pts = exHist.get(chartEx).sessions.filter(p => p.date >= cutoff);
+  if (!pts.length) {
+    const msg = elMk('div', 'chart-empty', `No ${exHist.get(chartEx).name} sessions in the last ${RANGE_WORDS[chartRange]}. `);
+    const all = elMk('button', 'auth-link', 'Show all');
+    all.addEventListener('click', () => { chartRange = 'All'; renderChart(); });
+    msg.appendChild(all);
+    body.appendChild(msg);
+    return;
+  }
   const best = pts.reduce((a, b) => b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a), last = pts[pts.length - 1];
+  // Dates carry the year once the chart spans more than one, so "3 Oct" can't be read as the wrong October
+  const multiYear = pts[0].date.slice(0, 4) !== last.date.slice(0, 4);
+  const dLabel = k => multiYear ? `${shortDate(k)} ${k.slice(0, 4)}` : shortDate(k);
   body.appendChild(elMk('div', 'chart-sub', `Heaviest set per session · best ${fmtNum(best.weight)} ${unit} × ${best.reps}`));
 
   // Scale: clean ticks around the data, time on x
@@ -2910,7 +2951,7 @@ function renderChart() {
   }
   const xLabel = (p, anchor) => {
     const tx = svgEl('text', { x: px(p), y: H - 5, 'text-anchor': anchor, 'font-size': 10, fill: '#777' });
-    tx.textContent = shortDate(p.date); svg.appendChild(tx);
+    tx.textContent = dLabel(p.date); svg.appendChild(tx);
   };
   if (pts.length === 1) xLabel(last, 'middle'); else { xLabel(pts[0], 'start'); xLabel(last, 'end'); }
 
@@ -2945,7 +2986,7 @@ function renderChart() {
     if (pts.length > 16) dots.forEach((c, i) => c.setAttribute('visibility', i === ni || i === pts.length - 1 ? 'visible' : 'hidden'));
     tip.innerHTML = '';
     tip.appendChild(elMk('b', '', `${fmtNum(p.weight)} ${unit} × ${p.reps}`));
-    tip.appendChild(document.createTextNode(shortDate(p.date)));
+    tip.appendChild(document.createTextNode(dLabel(p.date)));
     tip.style.display = 'block';
     const half = tip.offsetWidth / 2, cx = px(p) / W * box.width;
     tip.style.left = `${Math.min(box.width - half, Math.max(half, cx))}px`;
@@ -2961,10 +3002,12 @@ function renderChart() {
   body.appendChild(plot);
 
   // The same numbers as a list, newest first
+  const shown = Math.min(5, pts.length);
+  body.appendChild(elMk('div', 'chart-table-label', shown === 1 ? 'Last session' : `Last ${shown} sessions`));
   const table = elMk('div', 'chart-table');
   pts.slice(-5).reverse().forEach(p => {
     const row = elMk('div');
-    row.appendChild(elMk('span', '', shortDate(p.date)));
+    row.appendChild(elMk('span', '', dLabel(p.date)));
     row.appendChild(elMk('b', '', `${fmtNum(p.weight)} ${unit} × ${p.reps}`));
     table.appendChild(row);
   });
