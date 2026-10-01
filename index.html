@@ -3825,9 +3825,10 @@ function drawStudio(c, data, style, format, photo) {
     g.strokeText(num, P - 4, regionBottom);
     g.restore();
   }
+  // The line above the title: just the workout number (left out when the giant number already shows it)
   const kicker = sticker ? `GYMLOG  ·  #${data.number}  ·  ${data.shortDate.toUpperCase()}`
-               : giant || !data.number ? 'WORKOUT COMPLETE' : `WORKOUT #${data.number.toLocaleString()}  ·  COMPLETE`;
-  text(kicker, P, kickerY, sans(story ? 26 : 22, 800), accent, 'left', 4);
+               : giant || !data.number ? '' : `WORKOUT #${data.number.toLocaleString()}`;
+  if (kicker) text(kicker, P, kickerY, sans(story ? 26 : 22, 800), accent, 'left', 4);
   g.shadowColor = 'transparent';
 
   // A sticker is only as big as its content, so it drops neatly onto a story
