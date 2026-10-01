@@ -3569,26 +3569,17 @@ function summaryData(key) {
 }
 const topSetText = top => top ? setText(top.weight, top.reps) : '';
 
-// Every set of an exercise, from most to least detailed. The first one that fits is used,
-// so nothing is cut off halfway and nothing claims more than was done.
-//   "52.5 kg · 12 / 10 / 10"   →   "50–60 kg · 12 / 10 / 8"   →   "52.5 kg · 8 × 8–12"
-function setsTexts(sets) {
-  if (!sets || !sets.length) return [''];
-  const ws = sets.map(st => st.weight), rs = sets.map(st => st.reps);
-  const lo = Math.min(...ws), hi = Math.max(...ws), rlo = Math.min(...rs), rhi = Math.max(...rs);
-  const repsList = rs.join(' / ');
-  const repsRange = rlo === rhi ? String(rlo) : `${rlo}–${rhi}`;
-  const compact = `${sets.length} × ${repsRange}`;
-  if (hi === 0) return [`${repsList} reps`, `${compact} reps`];   // bodyweight
-  const wRange = lo === hi ? `${fmtNum(lo)} ${unit}` : `${fmtNum(lo)}–${fmtNum(hi)} ${unit}`;
-  const out = [];
-  if (lo === hi) out.push(`${wRange} · ${repsList}`);
-  else out.push(`${ws.map(w => w > 0 ? fmtNum(w) : 'BW').join(' / ')} ${unit} · ${repsList}`, `${wRange} · ${repsList}`);
-  out.push(`${wRange} · ${compact}`);
-  return out;
+// One line per exercise: the weight used and all its reps added up, e.g. "52.5 kg for 32 reps".
+// If the weight changed between sets it shows the range ("100–150 kg for 17 reps"); bodyweight is just "32 reps".
+function setsText(sets) {
+  if (!sets || !sets.length) return '';
+  const ws = sets.map(st => st.weight), total = sets.reduce((n, st) => n + st.reps, 0);
+  const reps = `${total} ${total === 1 ? 'rep' : 'reps'}`;
+  const lo = Math.min(...ws), hi = Math.max(...ws);
+  if (hi === 0) return reps;
+  const w = lo === hi ? fmtNum(hi) : `${lo > 0 ? fmtNum(lo) : 'BW'}–${fmtNum(hi)}`;
+  return `${w} ${unit} for ${reps}`;
 }
-// For in-app lists: the most detailed version that still fits a phone row
-const setsText = sets => { const all = setsTexts(sets); return all.find(t => t.length <= 30) || all[all.length - 1]; };
 
 function openSummary(key) {
   sumKey = key;
@@ -3769,10 +3760,7 @@ function drawStudio(c, data, style, format, photo) {
   }
   for (let i = lifts.length - 1; i >= 0; i--) {
     const it = lifts[i], valFont = anton(Z.val);
-    // leave the name at least ~30% of the line (plus room for the PR tag)
-    const room = (W - P * 2) * 0.7 - (it.pr ? Z.prW + 18 : 0) - 20;
-    const options = setsTexts(it.sets).map(t => t.toUpperCase());
-    const val = options.find(t => width(t, valFont, 1) <= room) || options[options.length - 1];
+    const val = setsText(it.sets).toUpperCase();
     const vw = width(val, valFont, 1);
     text(val, W - P, y, valFont, ink, 'right', 1);
     let right = W - P - vw - 20;
