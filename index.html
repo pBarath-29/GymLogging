@@ -3559,7 +3559,7 @@ function summaryData(key) {
       const done = doneSets(ex);
       sets += ticked;
       const top = done.length ? done.reduce((a, b) => b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a) : null;
-      items.push({ name: ex.name || 'Exercise', top, pr: prSetIndex(key, ex) >= 0 });
+      items.push({ name: ex.name || 'Exercise', top, sets: done.map(st => ({ weight: st.weight, reps: st.reps })), pr: prSetIndex(key, ex) >= 0 });
     }
   const [y, m, d] = key.split('-').map(Number), date = new Date(y, m - 1, d);
   return {
@@ -3568,6 +3568,27 @@ function summaryData(key) {
   };
 }
 const topSetText = top => top ? setText(top.weight, top.reps) : '';
+
+// Every set of an exercise, from most to least detailed. The first one that fits is used,
+// so nothing is cut off halfway and nothing claims more than was done.
+//   "52.5 kg · 12 / 10 / 10"   →   "50–60 kg · 12 / 10 / 8"   →   "52.5 kg · 8 × 8–12"
+function setsTexts(sets) {
+  if (!sets || !sets.length) return [''];
+  const ws = sets.map(st => st.weight), rs = sets.map(st => st.reps);
+  const lo = Math.min(...ws), hi = Math.max(...ws), rlo = Math.min(...rs), rhi = Math.max(...rs);
+  const repsList = rs.join(' / ');
+  const repsRange = rlo === rhi ? String(rlo) : `${rlo}–${rhi}`;
+  const compact = `${sets.length} × ${repsRange}`;
+  if (hi === 0) return [`${repsList} reps`, `${compact} reps`];   // bodyweight
+  const wRange = lo === hi ? `${fmtNum(lo)} ${unit}` : `${fmtNum(lo)}–${fmtNum(hi)} ${unit}`;
+  const out = [];
+  if (lo === hi) out.push(`${wRange} · ${repsList}`);
+  else out.push(`${ws.map(w => w > 0 ? fmtNum(w) : 'BW').join(' / ')} ${unit} · ${repsList}`, `${wRange} · ${repsList}`);
+  out.push(`${wRange} · ${compact}`);
+  return out;
+}
+// For in-app lists: the most detailed version that still fits a phone row
+const setsText = sets => { const all = setsTexts(sets); return all.find(t => t.length <= 30) || all[all.length - 1]; };
 
 function openSummary(key) {
   sumKey = key;
@@ -3590,7 +3611,7 @@ function openSummary(key) {
     row.appendChild(elMk('span', '', it.name));
     const val = elMk('span', 'sum-val');
     if (it.pr) val.appendChild(elMk('span', 'pr-badge', 'PR'));
-    val.appendChild(document.createTextNode(topSetText(it.top)));
+    val.appendChild(document.createTextNode(setsText(it.sets)));
     row.appendChild(val);
     list.appendChild(row);
   });
@@ -3747,8 +3768,11 @@ function drawStudio(c, data, style, format, photo) {
     y -= Z.liftH;
   }
   for (let i = lifts.length - 1; i >= 0; i--) {
-    const it = lifts[i], val = topSetText(it.top).toUpperCase();
-    const valFont = anton(Z.val);
+    const it = lifts[i], valFont = anton(Z.val);
+    // leave the name at least ~30% of the line (plus room for the PR tag)
+    const room = (W - P * 2) * 0.7 - (it.pr ? Z.prW + 18 : 0) - 20;
+    const options = setsTexts(it.sets).map(t => t.toUpperCase());
+    const val = options.find(t => width(t, valFont, 1) <= room) || options[options.length - 1];
     const vw = width(val, valFont, 1);
     text(val, W - P, y, valFont, ink, 'right', 1);
     let right = W - P - vw - 20;
@@ -3950,7 +3974,7 @@ function openPicker() {
     row.appendChild(elMk('span', '', it.name));
     const val = elMk('span', 'sum-val');
     if (it.pr) val.appendChild(elMk('span', 'pr-badge', 'PR'));
-    val.appendChild(document.createTextNode(topSetText(it.top)));
+    val.appendChild(document.createTextNode(setsText(it.sets)));
     row.appendChild(val);
     list.appendChild(row);
   });
