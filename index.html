@@ -3635,7 +3635,10 @@ function shareData(key) {
   const [y, m, d] = key.split('-').map(Number);
   const tops = s.items.filter(it => it.top).map(it => it.top);
   const topSet = tops.length ? tops.reduce((a, b) => b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a) : null;
-  return { ...s, groups, topSet, streak: workoutStats(new Date(y, m - 1, d)).streak,
+  const reps = ((db[key] && db[key].groups) || []).reduce((n, g) => n + (g.exercises || []).reduce((m2, ex) => m2 + doneSets(ex).reduce((r, st) => r + st.reps, 0), 0), 0);
+  // This day's place among every day with a ticked set, counting from the first
+  const number = Object.keys(db).filter(k => k <= key && dayState(db[k]) === 'done').length;
+  return { ...s, groups, topSet, reps, number, streak: workoutStats(new Date(y, m - 1, d)).streak,
            shortDate: `${d} ${MONTHS[m - 1]} ${y}`, weekday: DFULL[(new Date(y, m - 1, d).getDay() + 6) % 7] };
 }
 
@@ -3764,12 +3767,9 @@ function drawStudio(c, data, style, format, photo) {
     y -= 30;
   }
 
-  // three stats: sets, exercises, and PRs (or the day's top set when there were none)
-  const top = data.topSet;
+  // three stats: sets, exercises, and PRs (or total reps when there were none)
   const third = data.prs > 0 ? [String(data.prs), data.prs === 1 ? 'PR' : 'PRS']
-              : top && top.weight > 0 ? [fmtNum(top.weight), `TOP SET · ${unit.toUpperCase()}`]
-              : top ? [String(top.reps), 'MOST REPS']
-              : [String(data.groups.length || '—'), data.groups.length === 1 ? 'MUSCLE GROUP' : 'MUSCLE GROUPS'];
+              : [data.reps.toLocaleString(), data.reps === 1 ? 'REP' : 'REPS'];
   const stats = [[String(data.sets), data.sets === 1 ? 'SET' : 'SETS'],
                  [String(data.items.length), data.items.length === 1 ? 'EXERCISE' : 'EXERCISES'],
                  third];
@@ -3808,8 +3808,26 @@ function drawStudio(c, data, style, format, photo) {
   while ((lines.length > 2 || lines.some(l => width(l, anton(tSize), 1) > W - P * 2)) && tSize > 60) { tSize -= 6; wrap(tSize); }
   if (lines.length > 2) { lines.length = 2; lines[1] = fit(lines[1], anton(tSize), W - P * 2); }
   for (let i = lines.length - 1; i >= 0; i--) { text(lines[i], P - 4, y, anton(tSize), ink, 'left', 1); y -= tSize * 0.98; }
-  const kicker = sticker ? `GYMLOG  ·  ${data.shortDate.toUpperCase()}` : 'WORKOUT COMPLETE';
-  text(kicker, P, y + tSize * 0.98 - tSize - 14, sans(story ? 26 : 22, 800), accent, 'left', 4);
+  const kickerY = y + tSize * 0.98 - tSize - 14;
+
+  // Story cards in Dark/Orange have open space under the header: fill it with a giant outlined workout number.
+  // Elsewhere (the photo needs that space; square and sticker are tight) the number joins the small line above the title.
+  const regionTop = P + 52 + 70, regionBottom = kickerY - 64;
+  const numSize = Math.min(430, (regionBottom - regionTop - 40) / 0.9);
+  const giant = story && (style === 'dark' || style === 'orange') && data.number > 0 && numSize >= 180;
+  if (giant) {
+    const label = 'WORKOUT NUMBER', num = `#${data.number.toLocaleString()}`;
+    text(label, P, regionBottom - numSize * 0.9 - 26, sans(24, 800), muted, 'left', 4);
+    g.save();
+    g.font = anton(numSize); g.textAlign = 'left'; spaced(2);
+    g.lineWidth = 3; g.lineJoin = 'round';
+    g.strokeStyle = style === 'orange' ? 'rgba(23,11,2,0.55)' : 'rgba(249,115,22,0.75)';
+    g.strokeText(num, P - 4, regionBottom);
+    g.restore();
+  }
+  const kicker = sticker ? `GYMLOG  ·  #${data.number}  ·  ${data.shortDate.toUpperCase()}`
+               : giant || !data.number ? 'WORKOUT COMPLETE' : `WORKOUT #${data.number.toLocaleString()}  ·  COMPLETE`;
+  text(kicker, P, kickerY, sans(story ? 26 : 22, 800), accent, 'left', 4);
   g.shadowColor = 'transparent';
 
   // A sticker is only as big as its content, so it drops neatly onto a story
