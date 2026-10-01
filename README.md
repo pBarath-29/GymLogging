@@ -13,8 +13,9 @@ A few things that make it useful in practice:
 - If you do the same routine every week, you can copy last week's workout for that day in one tap.
 - Exercise names are suggested as you type, from your own history and a list of common lifts.
 - When a set beats your previous best for that exercise it is marked as a PR. Finishing every set of the day opens a summary you can share as an image.
-- There is a built-in rest timer with presets (30s, 1 min, 2 min, 3 min, 5 min). It vibrates and plays a sound when time is up, and stays accurate when the phone is locked.
-- The Progress tab shows workouts this week, your weekly streak, a strength chart per exercise, and progress photos. Photos are compressed and stored in your account.
+- Bodyweight exercises (no weight entered, e.g. pull-ups) count by reps for PRs, charts and summaries.
+- Muscle groups and exercises can be reordered with up/down arrows while editing a day or a collection.
+- The Progress tab shows workouts this week, your weekly streak, a strength chart per exercise (3M / 6M / 1Y / All), a body weight log with its own chart, and your latest progress photos. The Photos page shows every photo grouped by month, loads them 12 at a time, and lets you compare any two side by side.
 - Weights can be labelled in kg or lb (Settings). This changes the label only; logged numbers are not converted.
 - You can export all your data as a JSON file from Settings.
 - Works as a Progressive Web App: install it from the browser and use it like a native app. It opens and logs sets with no signal, and syncs when you are back online.
@@ -52,6 +53,8 @@ users/
       {id}/            <- one document per collection
     photos/
       {timestamp}/     <- one document per photo (stores base64 JPEG)
+    body/
+      {YYYY-MM-DD}/    <- one body weight entry per day: { weight }
 shared/
   {id}/                <- snapshot of a collection shared by link: owner, name, groups, unit
 ```
@@ -60,4 +63,4 @@ A share link is `/?c={id}`. Any signed-in user with the link can read that one d
 
 ## Account and data
 
-Users can delete their account from the Settings screen inside the app. This permanently removes all workout data, collections, photos and shared collections from Firestore and deletes the Firebase Auth account.
+Users can delete their account from the Settings screen inside the app. This permanently removes all workout data, collections, photos, body weight entries and shared collections from Firestore and deletes the Firebase Auth account.

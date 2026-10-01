@@ -11,18 +11,18 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>GymLog — track your lifts, know what to beat</title>
-  <meta name="description" content="A free workout log that shows what you lifted last time, so you always know what to beat. One-tap routines, rest timer, strength charts. Works offline and syncs across your devices.">
+  <meta name="description" content="A free workout log that shows what you lifted last time, so you always know what to beat. One-tap routines, personal records and strength charts. Works offline and syncs across your devices.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="GymLog">
   <meta property="og:title" content="GymLog — know what to beat, every set">
-  <meta property="og:description" content="A free workout log with one-tap routines, a rest timer and strength charts. Works offline.">
+  <meta property="og:description" content="A free workout log with one-tap routines, personal records and strength charts. Works offline.">
   <meta property="og:url" content="https://gymlog-7z5j.onrender.com/">
   <meta property="og:image" content="https://gymlog-7z5j.onrender.com/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="GymLog — know what to beat, every set">
-  <meta name="twitter:description" content="A free workout log with one-tap routines, a rest timer and strength charts. Works offline.">
+  <meta name="twitter:description" content="A free workout log with one-tap routines, personal records and strength charts. Works offline.">
   <meta name="twitter:image" content="https://gymlog-7z5j.onrender.com/og.png">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -427,28 +427,7 @@
       .empty-icon { font-size: 40px; margin-bottom: 8px; }
     }
 
-    /* ── Timer FAB ── */
-    .fab-wrap { position: fixed; bottom: calc(var(--bot-h) + 20px); right: calc(20px + var(--sar)); z-index: 200; }
-    .fab {
-      width: 64px; height: 64px; border-radius: 50%; background: var(--accent); border: none;
-      cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      box-shadow: 0 4px 24px var(--accent-glow); transition: transform 0.15s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .fab:active { transform: scale(0.93); }
-    .fab.pulsing { animation: fab-pulse 1s ease-in-out infinite; }
-    @keyframes fab-pulse {
-      0%,100% { box-shadow: 0 4px 24px var(--accent-glow); }
-      50%      { box-shadow: 0 4px 40px rgba(249,115,22,0.6); }
-    }
-    .fab-icon { font-size: 22px; line-height: 1; }
-    .fab-text { font-size: 9px; font-weight: 800; color: #fff; letter-spacing: 0.8px; margin-top: 1px; }
-    @media (max-height: 700px) {
-      .fab { width: 56px; height: 56px; }
-      .fab-wrap { bottom: calc(var(--bot-h) + 14px); right: calc(14px + var(--sar)); }
-    }
-
-    /* ── Timer Sheet ── */
+    /* ── Bottom sheets ── */
     .overlay {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65);
       z-index: 300; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
@@ -464,22 +443,6 @@
       position: relative; margin-bottom: 14px;
     }
     .sheet-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.2px; }
-    .sheet-close {
-      position: absolute; right: 0; top: 50%; transform: translateY(-50%);
-      background: var(--surface2); border: 1px solid #333; color: var(--text-muted);
-      width: 30px; height: 30px; border-radius: 50%; font-size: 15px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .sheet-close:active { background: var(--surface3); }
-    .timer-display { text-align: center; margin-bottom: 20px; }
-    .timer-clock { font-size: 76px; font-weight: 200; letter-spacing: -3px; font-variant-numeric: tabular-nums; line-height: 1; transition: color 0.3s; }
-    .timer-clock.st-idle    { color: var(--text); }
-    .timer-clock.st-running { color: var(--accent); }
-    .timer-clock.st-done    { color: var(--success); }
-    .timer-track { width: 100%; height: 3px; background: #2a2a2a; border-radius: 2px; overflow: hidden; margin-top: 14px; }
-    .timer-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 1s linear, background 0.3s; }
-    .timer-fill.done { background: var(--success); }
     .t-controls { display: flex; gap: 10px; margin-bottom: 22px; }
     .t-btn {
       flex: 1; padding: 15px; border-radius: 12px; border: none;
@@ -489,13 +452,6 @@
     .t-btn:active { opacity: 0.85; }
     .t-btn.primary   { background: var(--accent); color: #fff; }
     .t-btn.secondary { background: var(--surface2); color: var(--text); }
-    .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
-    .preset {
-      background: var(--surface2); border: 1.5px solid #2e2e2e; color: var(--text);
-      border-radius: 9px; padding: 8px 14px; font-size: 13px; font-weight: 600;
-      cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent;
-    }
-    .preset.sel, .preset:active { border-color: var(--accent); color: var(--accent); background: rgba(249,115,22,0.08); }
 
     /* ── Toast notifications ── */
     .toast-container {
@@ -946,7 +902,17 @@
       display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted);
       padding: 7px 2px; border-bottom: 1px solid #1e1e1e; font-variant-numeric: tabular-nums;
     }
-    .chart-table div b { color: var(--text); font-weight: 600; }
+    .chart-table div b { color: var(--text); font-weight: 600; display: flex; align-items: center; gap: 10px; }
+    .row-del {
+      background: none; border: none; color: var(--text-dim); font-size: 13px; cursor: pointer;
+      width: 24px; height: 24px; border-radius: 6px; -webkit-tap-highlight-color: transparent;
+    }
+    .row-del:active { background: var(--surface2); color: #ef4444; }
+    .bw-form { display: flex; align-items: center; gap: 8px; margin: 10px 0 12px; }
+    .bw-input { flex: 1; text-align: left; padding-left: 12px; }
+    .bw-unit { font-size: 14px; color: var(--text-muted); }
+    .move-btn { font-size: 16px; width: 30px; }
+    .move-btn:disabled { opacity: 0.25; cursor: default; }
     .prog-section-title { font-size: 17px; font-weight: 700; margin-bottom: 12px; }
     .prog-empty { padding-top: 28px; }
 
@@ -1049,7 +1015,7 @@
 
   <ul class="auth-points">
     <li>Start from a ready-made routine in one tap</li>
-    <li>Rest timer, personal records and strength charts</li>
+    <li>Personal records, strength charts and progress photos</li>
     <li>Works with no signal, syncs across your devices</li>
   </ul>
 
@@ -1109,38 +1075,6 @@
 
   <div class="day-tabs" id="dayTabs"></div>
   <main id="main"></main>
-
-  <div class="fab-wrap">
-    <button class="fab" id="fabBtn">
-      <span class="fab-icon">⏱</span>
-      <span class="fab-text" id="fabText">REST</span>
-    </button>
-  </div>
-
-  <div class="overlay" id="overlay">
-    <div class="sheet">
-      <div class="sheet-handle"></div>
-      <div class="sheet-top-row">
-        <div class="sheet-title">Rest Timer</div>
-        <button class="sheet-close" id="sheetClose">✕</button>
-      </div>
-      <div class="timer-display">
-        <div class="timer-clock st-idle" id="clock">01:30</div>
-        <div class="timer-track"><div class="timer-fill" id="fill" style="width:100%"></div></div>
-      </div>
-      <div class="t-controls">
-        <button class="t-btn secondary" id="btnReset">Reset</button>
-        <button class="t-btn primary"   id="btnToggle">Start</button>
-      </div>
-      <div class="presets" id="presets">
-        <button class="preset sel" data-s="30">30 s</button>
-        <button class="preset" data-s="60">1 min</button>
-        <button class="preset" data-s="120">2 min</button>
-        <button class="preset" data-s="180">3 min</button>
-        <button class="preset" data-s="300">5 min</button>
-      </div>
-    </div>
-  </div>
 
 <!-- ── Library View ── -->
 <div id="libraryView">
@@ -1204,6 +1138,17 @@
       <select class="chart-select" id="chartSelect" aria-label="Exercise"></select>
     </div>
     <div id="chartBody"></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-head">
+      <span class="chart-title">Body weight</span>
+    </div>
+    <form class="bw-form" id="bwForm" novalidate>
+      <input class="set-input bw-input" id="bwInput" type="number" inputmode="decimal" step="0.1" min="0" placeholder="Today's weight" aria-label="Today's body weight">
+      <span class="bw-unit" id="bwUnit">kg</span>
+      <button class="lib-new-btn" type="submit">Log</button>
+    </form>
+    <div id="bwBody"></div>
   </div>
   <div class="prog-photos-head">
     <h3 class="prog-section-title">Photos</h3>
@@ -1565,7 +1510,7 @@ document.getElementById('btnDeleteAccount').addEventListener('click', async () =
     // Drop any edits still waiting to be written, so they can't recreate a day afterwards
     pendingSaves.forEach(t => clearTimeout(t)); pendingSaves.clear();
     // Delete all day, template and photo documents
-    for (const sub of ['days', 'templates', 'photos']) {
+    for (const sub of ['days', 'templates', 'photos', 'body']) {
       const snap = await getDocs(collection(fdb, 'users', uid, sub));
       await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
     }
@@ -1601,7 +1546,7 @@ onAuthStateChanged(auth, async (user) => {
     hide('appRoot');
 
     // Photos are heavy and only needed on the Progress tab, so they load when it's first opened
-    resetPhotos();
+    resetPhotos(); bodyLog = []; bodyLoaded = false;
     await Promise.all([loadFromFirestore(), loadTemplates(), loadProfile()]);
 
     // Accounts without a picture (email sign-in) get their initial, so Settings is always reachable
@@ -1618,14 +1563,13 @@ onAuthStateChanged(auth, async (user) => {
     hide('loadingScreen');
     show('appRoot');
     switchTab('workout');
-    refreshTimer();
     syncUnitSeg();
     render();
     if (!await maybeStartTour()) maybeImportShared();
   } else {
     currentUid = null;
     pendingSaves.forEach(t => clearTimeout(t)); pendingSaves.clear();
-    db = {}; templates = []; resetPhotos(); profile = {};
+    db = {}; templates = []; resetPhotos(); profile = {}; bodyLog = []; bodyLoaded = false;
     closeGallery(); document.getElementById('compareOverlay').classList.remove('open');
     show('authScreen');
     hide('loadingScreen');
@@ -1757,10 +1701,6 @@ function getMonday(d) {
 function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate()+n); return x; }
 function dateKey(d)    { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function sameDay(a,b)  { return dateKey(a) === dateKey(b); }
-function fmt(s) {
-  const m = Math.floor(Math.abs(s)/60), r = Math.abs(s)%60;
-  return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`;
-}
 function ensureDay(key) {
   if (!db[key]) db[key] = { rest: false, groups: [] };
   return db[key];
@@ -1845,14 +1785,18 @@ const fmtNum = n => String(Math.round(n * 100) / 100);
 const exId = ex => (ex.name || '').trim().toLowerCase();
 
 // Completed sets of an exercise that have both a weight and reps
+// Completed sets with reps. A blank or zero weight is a bodyweight set (pull-ups, push-ups, dips…).
 function doneSets(ex) {
   const out = [];
   (ex.sets || []).forEach((s, i) => {
-    const weight = parseFloat(s.weight), reps = parseInt(s.reps, 10);
-    if (s.done && weight > 0 && reps > 0) out.push({ i, weight, reps, e1: e1rm(weight, reps) });
+    const weight = Math.max(0, parseFloat(s.weight) || 0), reps = parseInt(s.reps, 10);
+    if (s.done && reps > 0) out.push({ i, weight, reps, e1: weight > 0 ? e1rm(weight, reps) : 0 });
   });
   return out;
 }
+
+// "62.5 kg × 8", or "12 reps" for a bodyweight set
+const setText = (weight, reps) => weight > 0 ? `${fmtNum(weight)} ${unit} × ${reps}` : `${reps} reps`;
 
 function buildHistory() {
   exHist = new Map();
@@ -1865,13 +1809,15 @@ function buildHistory() {
         if (!id || !sets.length) continue;
         const heavy = sets.reduce((a, b) => b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a);
         const e1 = Math.max(...sets.map(s => s.e1));
+        const bwReps = Math.max(0, ...sets.filter(s => s.weight === 0).map(s => s.reps));   // best bodyweight set
         if (!exHist.has(id)) exHist.set(id, { name: ex.name.trim(), sessions: [] });
         const h = exHist.get(id), last = h.sessions[h.sessions.length - 1];
         if (last && last.date === k) {   // same exercise twice in one day: keep the better numbers
-          if (heavy.weight > last.weight) { last.weight = heavy.weight; last.reps = heavy.reps; }
+          if (heavy.weight > last.weight || (heavy.weight === last.weight && heavy.reps > last.reps)) { last.weight = heavy.weight; last.reps = heavy.reps; }
           last.e1 = Math.max(last.e1, e1);
+          last.bwReps = Math.max(last.bwReps, bwReps);
         } else {
-          h.sessions.push({ date: k, weight: heavy.weight, reps: heavy.reps, e1 });
+          h.sessions.push({ date: k, weight: heavy.weight, reps: heavy.reps, e1, bwReps });
         }
       }
   });
@@ -1884,8 +1830,8 @@ function priorBest(id, key) {
   let best = null;
   for (const s of h.sessions) {
     if (s.date >= key) break;
-    if (!best) best = { weight: s.weight, e1: s.e1 };
-    else { best.weight = Math.max(best.weight, s.weight); best.e1 = Math.max(best.e1, s.e1); }
+    if (!best) best = { weight: s.weight, e1: s.e1, bwReps: s.bwReps };
+    else { best.weight = Math.max(best.weight, s.weight); best.e1 = Math.max(best.e1, s.e1); best.bwReps = Math.max(best.bwReps, s.bwReps); }
   }
   return best;
 }
@@ -1894,10 +1840,19 @@ function priorBest(id, key) {
 function prSetIndex(key, ex) {
   const sets = doneSets(ex), prior = priorBest(exId(ex), key);
   if (!sets.length || !prior) return -1;
-  const heavy = sets.reduce((a, b) => b.weight > a.weight ? b : a);
-  if (heavy.weight > prior.weight) return heavy.i;
-  const top = sets.reduce((a, b) => b.e1 > a.e1 ? b : a);
-  return top.e1 > prior.e1 + 0.01 ? top.i : -1;
+  const weighted = sets.filter(s => s.weight > 0), bodyweight = sets.filter(s => s.weight === 0);
+  if (weighted.length) {
+    const heavy = weighted.reduce((a, b) => b.weight > a.weight ? b : a);
+    if (heavy.weight > prior.weight) return heavy.i;
+    const top = weighted.reduce((a, b) => b.e1 > a.e1 ? b : a);
+    if (top.e1 > prior.e1 + 0.01) return top.i;
+  }
+  // Bodyweight: more reps than ever before without added weight
+  if (bodyweight.length && prior.bwReps > 0) {
+    const most = bodyweight.reduce((a, b) => b.reps > a.reps ? b : a);
+    if (most.reps > prior.bwReps) return most.i;
+  }
+  return -1;
 }
 
 function workoutStats() {
@@ -2135,6 +2090,7 @@ function buildGroup(key, gi, group) {
         saveDB(key); render();
       }
     });
+    addMoveBtns(hdr, db[key].groups, gi, () => { saveDB(key); render(); });
     hdr.appendChild(del);
   }
   section.appendChild(hdr);
@@ -2194,6 +2150,7 @@ function buildCard(key, gi, ei, ex) {
         saveDB(key); render();
       }
     });
+    addMoveBtns(hdr, db[key].groups[gi].exercises, ei, () => { saveDB(key); render(); });
     hdr.appendChild(del);
   }
   card.appendChild(hdr);
@@ -2265,7 +2222,7 @@ function buildSetRow(key, gi, ei, si, set, exName, totalSets) {
     saveDB(key); render();
     if (!ex.sets[si].done) return;
     if (!hadPr && prSetIndex(key, ex) === si) {
-      showToast(`New PR 🎉 ${ex.name || 'Exercise'} ${ex.sets[si].weight}${unit} × ${ex.sets[si].reps}`, 'success', 3500);
+      showToast(`New PR 🎉 ${ex.name || 'Exercise'} ${setText(parseFloat(ex.sets[si].weight) || 0, ex.sets[si].reps)}`, 'success', 3500);
       track('pr_hit');
     }
     if (!wasComplete && isDayComplete(db[key].groups)) openSummary(key);
@@ -2432,81 +2389,6 @@ document.getElementById('btnCloseCal').addEventListener('click', closeCalendar);
 document.getElementById('btnCalToday').addEventListener('click', () => scrollCalTo(new Date(), true));
 
 // ─────────────────────────────────────────
-//  TIMER
-// ─────────────────────────────────────────
-const T = { total:30, left:30, running:false, iv:null, endAt:0 };
-const elClock   = document.getElementById('clock');
-const elFill    = document.getElementById('fill');
-const elFabText = document.getElementById('fabText');
-const elToggle  = document.getElementById('btnToggle');
-const elFab     = document.getElementById('fabBtn');
-
-function setDuration(secs) { clearInterval(T.iv); T.running=false; T.total=T.left=secs; refreshTimer(); syncPresets(); }
-
-// The countdown is measured against the clock, not by counting ticks: browsers slow or stop
-// timers when the screen locks, and this way the time is still right when you come back.
-function startTimer() {
-  if (T.running || T.left <= 0) return;
-  T.running = true;
-  T.endAt = Date.now() + T.left * 1000;
-  T.iv = setInterval(tickTimer, 250);
-  refreshTimer();
-}
-
-function tickTimer() {
-  if (!T.running) return;
-  const left = Math.max(0, Math.ceil((T.endAt - Date.now()) / 1000));
-  if (left === T.left) return;
-  T.left = left;
-  if (left === 0) { clearInterval(T.iv); T.running = false; refreshTimer(); onTimerDone(); }
-  else refreshTimer();
-}
-document.addEventListener('visibilitychange', () => { if (!document.hidden) tickTimer(); });
-
-function refreshTimer() {
-  elClock.textContent = fmt(T.left);
-  elFill.style.width  = (T.total > 0 ? (T.left/T.total)*100 : 100) + '%';
-  if (T.left === 0) {
-    elClock.className='timer-clock st-done'; elFill.classList.add('done');
-    elToggle.textContent='Restart'; elFabText.textContent='DONE'; elFab.classList.remove('pulsing');
-  } else if (T.running) {
-    elClock.className='timer-clock st-running'; elFill.classList.remove('done');
-    elToggle.textContent='Pause'; elFabText.textContent=fmt(T.left); elFab.classList.add('pulsing');
-  } else {
-    elClock.className='timer-clock st-idle'; elFill.classList.remove('done');
-    elToggle.textContent = T.left < T.total ? 'Resume' : 'Start';
-    elFabText.textContent='REST'; elFab.classList.remove('pulsing');
-  }
-}
-function syncPresets() { document.querySelectorAll('.preset').forEach(b => b.classList.toggle('sel', +b.dataset.s===T.total)); }
-
-document.getElementById('btnToggle').addEventListener('click', () => {
-  if (T.left === 0) { T.left=T.total; T.running=false; clearInterval(T.iv); refreshTimer(); return; }
-  if (T.running) { clearInterval(T.iv); T.running=false; refreshTimer(); }
-  else { startTimer(); }
-});
-document.getElementById('btnReset').addEventListener('click', () => { clearInterval(T.iv); T.running=false; T.left=T.total; refreshTimer(); });
-document.getElementById('presets').addEventListener('click', e => { const b=e.target.closest('.preset'); if (b) setDuration(+b.dataset.s); });
-function onTimerDone() {
-  if (navigator.vibrate) navigator.vibrate([150,80,150,80,300]);
-  try {
-    const ctx=new (window.AudioContext||window.webkitAudioContext)();
-    [0,0.35,0.7].forEach(t => {
-      const osc=ctx.createOscillator(), gain=ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination); osc.type='sine'; osc.frequency.value=880;
-      gain.gain.setValueAtTime(0,ctx.currentTime+t);
-      gain.gain.linearRampToValueAtTime(0.25,ctx.currentTime+t+0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.3);
-      osc.start(ctx.currentTime+t); osc.stop(ctx.currentTime+t+0.31);
-    });
-  } catch(_) {}
-}
-const closeOverlay = () => document.getElementById('overlay').classList.remove('open');
-document.getElementById('fabBtn').addEventListener('click', () => document.getElementById('overlay').classList.add('open'));
-document.getElementById('overlay').addEventListener('click', e => { if (e.target===document.getElementById('overlay')) closeOverlay(); });
-document.getElementById('sheetClose').addEventListener('click', closeOverlay);
-
-// ─────────────────────────────────────────
 //  TEMPLATES (COLLECTIONS)
 // ─────────────────────────────────────────
 let templates    = [];
@@ -2610,6 +2492,18 @@ const visibleStarters = () => STARTER_ROUTINES.filter(st => !(profile.hiddenStar
 const TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg>';
 
+// ↑ ↓ buttons that swap item i with its neighbour in arr, then call after()
+function addMoveBtns(hdr, arr, i, after) {
+  [['↑', -1, 'Move up'], ['↓', 1, 'Move down']].forEach(([ch, d, label]) => {
+    const b = elMk('button', 'icon-btn move-btn', ch);
+    b.title = label; b.setAttribute('aria-label', label);
+    const j = i + d;
+    if (j < 0 || j >= arr.length) b.disabled = true;
+    else b.addEventListener('click', () => { [arr[i], arr[j]] = [arr[j], arr[i]]; after(); });
+    hdr.appendChild(b);
+  });
+}
+
 const tplGroupNames = tpl => (tpl.groups || []).map(g => g.name).filter(Boolean).join(' · ');
 
 // Saves a copy of some groups as a new collection and returns it
@@ -2669,6 +2563,7 @@ function buildTplGroup(tid, gi, group) {
     tpl.groups.splice(gi, 1);
     saveTpl(tid); renderTplEditor();
   });
+  addMoveBtns(hdr, tpl.groups, gi, () => { saveTpl(tid); renderTplEditor(); });
   hdr.appendChild(del);
   section.appendChild(hdr);
   (group.exercises || []).forEach((ex, ei) => section.appendChild(buildTplCard(tid, gi, ei, ex)));
@@ -2710,6 +2605,7 @@ function buildTplCard(tid, gi, ei, ex) {
       saveTpl(tid); renderTplEditor();
     }
   });
+  addMoveBtns(hdr, tpl.groups[gi].exercises, ei, () => { saveTpl(tid); renderTplEditor(); });
   hdr.appendChild(del);
   card.appendChild(hdr);
   const sh = elMk('div', 'sets-head');
@@ -2942,6 +2838,77 @@ function resetPhotos() {
   photoCursor = null; photoCount = null; firstPhoto = null;
 }
 let chartEx = null; // exercise (lowercase name) shown in the strength chart
+
+// Body weight log: one entry per day in users/{uid}/body/{YYYY-MM-DD}
+let bodyLog = [];          // [{ date, weight }], oldest first
+let bodyLoaded = false, bodyLoading = false;
+let bwRange = '3M';
+try { const r = localStorage.getItem('glog_bw_range'); if (r in { '3M': 1, '6M': 1, '1Y': 1, 'All': 1 }) bwRange = r; } catch (_) {}
+
+async function loadBody() {
+  if (!currentUid || bodyLoaded || bodyLoading) return;
+  const uid = currentUid;
+  bodyLoading = true;
+  try {
+    const snap = await getDocs(collection(fdb, 'users', uid, 'body'));
+    if (uid === currentUid) {
+      bodyLog = snap.docs.map(d => ({ date: d.id, weight: d.data().weight })).filter(e => e.weight > 0).sort((a, b) => a.date < b.date ? -1 : 1);
+      bodyLoaded = true;
+    }
+  } catch (_) {}
+  bodyLoading = false;
+}
+
+function renderBody() {
+  const body = document.getElementById('bwBody');
+  body.innerHTML = '';
+  document.getElementById('bwUnit').textContent = unit;
+  const today = bodyLog.find(e => e.date === dateKey(new Date()));
+  document.getElementById('bwInput').placeholder = today ? `Today: ${fmtNum(today.weight)}` : "Today's weight";
+  if (!bodyLog.length) {
+    body.appendChild(elMk('div', 'chart-empty', bodyLoading ? 'Loading…' : 'Log your weight now and then to see the trend here.'));
+    return;
+  }
+  timeChart(body, {
+    pts: bodyLog.map(e => ({ date: e.date, v: e.weight, text: `${fmtNum(e.weight)} ${unit}` })),
+    range: bwRange,
+    onRange: (r, temporary) => {
+      bwRange = r;
+      if (!temporary) try { localStorage.setItem('glog_bw_range', r); } catch (_) {}
+      renderBody();
+    },
+    what: 'body weight entries',
+    noun: ['entry', 'entries'],
+    steps: [0.5, 1, 2, 5, 10, 20, 50],
+    aria: 'Body weight over time',
+    sub: (pts, dLabel) => {
+      const first = pts[0], last = pts[pts.length - 1];
+      if (pts.length === 1) return `Latest ${fmtNum(last.v)} ${unit}`;
+      const diff = Math.round((last.v - first.v) * 10) / 10;
+      const change = diff === 0 ? 'no change' : `${diff > 0 ? '+' : '−'}${fmtNum(Math.abs(diff))} ${unit}`;
+      return `Latest ${fmtNum(last.v)} ${unit} · ${change} since ${dLabel(first.date)}`;
+    },
+    onDelete: p => {
+      if (!confirm(`Delete your weight for ${shortDate(p.date)}?`)) return;
+      bodyLog = bodyLog.filter(e => e.date !== p.date);
+      deleteDoc(doc(fdb, 'users', currentUid, 'body', p.date)).catch(() => showToast("Couldn't delete — check your connection", 'error'));
+      renderBody();
+    },
+  });
+}
+
+document.getElementById('bwForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const inp = document.getElementById('bwInput'), w = Math.round(parseFloat(inp.value) * 10) / 10;
+  if (!(w >= 20 && w <= 999)) { showToast('Enter a weight between 20 and 999', 'warn'); return; }
+  const key = dateKey(new Date()), had = bodyLog.some(x => x.date === key);
+  bodyLog = bodyLog.filter(x => x.date !== key).concat({ date: key, weight: w }).sort((a, b) => a.date < b.date ? -1 : 1);
+  // Not awaited: offline, the write is kept on the device and sent later
+  setDoc(doc(fdb, 'users', currentUid, 'body', key), { weight: w }).catch(() => showToast("Couldn't save — check your connection", 'error'));
+  inp.value = ''; inp.blur();
+  renderBody();
+  showToast(had ? `Updated today's weight to ${fmtNum(w)} ${unit}` : `Logged ${fmtNum(w)} ${unit}`, 'success');
+});
 const CHART_RANGES = { '3M': 91, '6M': 182, '1Y': 365, 'All': 0 };   // days back; 0 = everything
 const RANGE_WORDS  = { '3M': '3 months', '6M': '6 months', '1Y': 'year', 'All': 'while' };
 let chartRange = '3M';
@@ -2953,7 +2920,6 @@ function switchTab(tab) {
   const isProgress = tab === 'progress';
   document.getElementById('dayTabs').style.display    = isWorkout ? '' : 'none';
   document.getElementById('main').style.display       = isWorkout ? '' : 'none';
-  document.getElementById('fabBtn').parentElement.style.display = isWorkout ? '' : 'none';
   document.getElementById('libraryView').classList.toggle('active',  isLibrary);
   document.getElementById('progressView').classList.toggle('active', isProgress);
   document.getElementById('bnavWorkout').classList.toggle('active',  isWorkout);
@@ -2961,6 +2927,7 @@ function switchTab(tab) {
   document.getElementById('bnavProgress').classList.toggle('active', isProgress);
   if (isProgress) {
     startPhotos();
+    if (!bodyLoaded) loadBody().then(() => { if (document.getElementById('progressView').classList.contains('active')) renderBody(); });
     renderProgress();
   }
   if (isLibrary)  renderLibrary();
@@ -3041,64 +3008,49 @@ const svgEl = (tag, attrs) => {
 };
 const shortDate = key => { const [, m, d] = key.split('-').map(Number); return `${d} ${MONTHS[m - 1]}`; };
 
-// Heaviest completed set per session for one exercise, as a line over time
-function renderChart() {
-  const sel = document.getElementById('chartSelect'), body = document.getElementById('chartBody');
-  body.innerHTML = ''; sel.innerHTML = '';
-  // Most-trained exercises first
-  const list = [...exHist.entries()].sort((a, b) => b[1].sessions.length - a[1].sessions.length || a[1].name.localeCompare(b[1].name));
-  if (!list.length) {
-    sel.style.display = 'none';
-    body.appendChild(elMk('div', 'chart-empty', 'Tick off a few sets and your strength for each exercise will be charted here.'));
-    return;
-  }
-  sel.style.display = '';
-  if (!exHist.has(chartEx)) chartEx = list[0][0];
-  list.forEach(([id, h]) => { const o = elMk('option', '', h.name); o.value = id; o.selected = id === chartEx; sel.appendChild(o); });
-
+// A line over time with range buttons, a touch/hover readout and the latest entries as a list.
+// pts: [{ date: 'YYYY-MM-DD', v: number, text: 'shown in the readout and list' }], oldest first.
+function timeChart(body, cfg) {
   // Time range. It starts on 3 months because recent progress is what people look for;
   // with years of history, "All" would squeeze the last few weeks into a sliver.
   const rangeRow = elMk('div', 'chart-ranges');
   Object.keys(CHART_RANGES).forEach(r => {
-    const b = elMk('button', `chart-range${r === chartRange ? ' sel' : ''}`, r);
-    b.addEventListener('click', () => {
-      chartRange = r;
-      try { localStorage.setItem('glog_chart_range', r); } catch (_) {}
-      renderChart();
-    });
+    const b = elMk('button', `chart-range${r === cfg.range ? ' sel' : ''}`, r);
+    b.addEventListener('click', () => cfg.onRange(r));
     rangeRow.appendChild(b);
   });
   body.appendChild(rangeRow);
 
-  const days = CHART_RANGES[chartRange], cutoff = days ? dateKey(addDays(new Date(), -days)) : '';
-  const pts = exHist.get(chartEx).sessions.filter(p => p.date >= cutoff);
+  const days = CHART_RANGES[cfg.range], cutoff = days ? dateKey(addDays(new Date(), -days)) : '';
+  const pts = cfg.pts.filter(p => p.date >= cutoff);
   if (!pts.length) {
-    const msg = elMk('div', 'chart-empty', `No ${exHist.get(chartEx).name} sessions in the last ${RANGE_WORDS[chartRange]}. `);
+    const msg = elMk('div', 'chart-empty', `No ${cfg.what} in the last ${RANGE_WORDS[cfg.range]}. `);
     const all = elMk('button', 'auth-link', 'Show all');
-    all.addEventListener('click', () => { chartRange = 'All'; renderChart(); });
+    all.addEventListener('click', () => cfg.onRange('All', true));
     msg.appendChild(all);
     body.appendChild(msg);
     return;
   }
-  const best = pts.reduce((a, b) => b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a), last = pts[pts.length - 1];
+  const last = pts[pts.length - 1];
   // Dates carry the year once the chart spans more than one, so "3 Oct" can't be read as the wrong October
   const multiYear = pts[0].date.slice(0, 4) !== last.date.slice(0, 4);
   const dLabel = k => multiYear ? `${shortDate(k)} ${k.slice(0, 4)}` : shortDate(k);
-  body.appendChild(elMk('div', 'chart-sub', `Heaviest set per session · best ${fmtNum(best.weight)} ${unit} × ${best.reps}`));
+  body.appendChild(elMk('div', 'chart-sub', cfg.sub(pts, dLabel)));
 
   // Scale: clean ticks around the data, time on x
   const W = 320, H = 150, L = 34, R = 14, TOP = 12, B = 22;
-  const lo = Math.min(...pts.map(p => p.weight)), hi = Math.max(...pts.map(p => p.weight));
-  const step = [1, 2.5, 5, 10, 20, 25, 50, 100, 200].find(s => (hi - lo) / s <= 3) || 250;
+  const lo = Math.min(...pts.map(p => p.v)), hi = Math.max(...pts.map(p => p.v));
+  const steps = cfg.steps || [1, 2.5, 5, 10, 20, 25, 50, 100, 200];
+  const step = steps.find(st => (hi - lo) / st <= 3) || steps[steps.length - 1] * 2;
   let y0 = Math.floor(lo / step) * step, y1 = Math.ceil(hi / step) * step;
   if (y0 === y1) { y0 = Math.max(0, y0 - step); y1 += step; }
   const t = k => { const [y, m, d] = k.split('-').map(Number); return Date.UTC(y, m - 1, d); };
   const t0 = t(pts[0].date), t1 = t(last.date);
   const px = p => pts.length === 1 ? (L + W - R) / 2 : L + (t(p.date) - t0) / (t1 - t0) * (W - L - R);
-  const py = w => TOP + (1 - (w - y0) / (y1 - y0)) * (H - TOP - B);
+  const py = v => TOP + (1 - (v - y0) / (y1 - y0)) * (H - TOP - B);
 
   const plot = elMk('div', 'chart-plot');
-  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `${exHist.get(chartEx).name}: heaviest set per session` });
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': cfg.aria });
   for (let v = y0; v <= y1 + 1e-9; v += step) {
     svg.appendChild(svgEl('line', { x1: L, x2: W - R, y1: py(v), y2: py(v), stroke: '#2a2a2a', 'stroke-width': 1 }));
     const tx = svgEl('text', { x: L - 6, y: py(v) + 3.5, 'text-anchor': 'end', 'font-size': 10, fill: '#777' });
@@ -3111,7 +3063,7 @@ function renderChart() {
   if (pts.length === 1) xLabel(last, 'middle'); else { xLabel(pts[0], 'start'); xLabel(last, 'end'); }
 
   if (pts.length > 1) {
-    const d = pts.map((p, i) => `${i ? 'L' : 'M'}${px(p).toFixed(1)} ${py(p.weight).toFixed(1)}`).join(' ');
+    const d = pts.map((p, i) => `${i ? 'L' : 'M'}${px(p).toFixed(1)} ${py(p.v).toFixed(1)}`).join(' ');
     svg.appendChild(svgEl('path', { d: `${d} L${px(last).toFixed(1)} ${py(y0)} L${px(pts[0]).toFixed(1)} ${py(y0)} Z`, fill: '#f97316', 'fill-opacity': 0.1 }));
     svg.appendChild(svgEl('path', { d, fill: 'none', stroke: '#f97316', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
   }
@@ -3119,16 +3071,16 @@ function renderChart() {
   svg.appendChild(cross);
   // Dots only where they stay readable; the last point always gets one and the value label
   const dots = pts.map((p, i) => {
-    const c = svgEl('circle', { cx: px(p), cy: py(p.weight), r: 4, fill: '#f97316', stroke: '#1a1a1a', 'stroke-width': 2 });
+    const c = svgEl('circle', { cx: px(p), cy: py(p.v), r: 4, fill: '#f97316', stroke: '#1a1a1a', 'stroke-width': 2 });
     if (pts.length > 16 && i !== pts.length - 1) c.setAttribute('visibility', 'hidden');
     svg.appendChild(c);
     return c;
   });
-  const endLabel = svgEl('text', { x: px(last), y: py(last.weight) - 9, 'text-anchor': pts.length === 1 ? 'middle' : 'end', 'font-size': 11, 'font-weight': 700, fill: '#f1f1f1' });
-  endLabel.textContent = fmtNum(last.weight); svg.appendChild(endLabel);
+  const endLabel = svgEl('text', { x: px(last), y: py(last.v) - 9, 'text-anchor': pts.length === 1 ? 'middle' : 'end', 'font-size': 11, 'font-weight': 700, fill: '#f1f1f1' });
+  endLabel.textContent = fmtNum(last.v); svg.appendChild(endLabel);
   plot.appendChild(svg);
 
-  // Touch or hover anywhere: the crosshair snaps to the nearest session
+  // Touch or hover anywhere: the crosshair snaps to the nearest point
   const tip = elMk('div', 'chart-tip');
   plot.appendChild(tip);
   const showAt = clientX => {
@@ -3140,7 +3092,7 @@ function renderChart() {
     dots.forEach((c, i) => c.setAttribute('r', i === ni ? 5.5 : 4));
     if (pts.length > 16) dots.forEach((c, i) => c.setAttribute('visibility', i === ni || i === pts.length - 1 ? 'visible' : 'hidden'));
     tip.innerHTML = '';
-    tip.appendChild(elMk('b', '', `${fmtNum(p.weight)} ${unit} × ${p.reps}`));
+    tip.appendChild(elMk('b', '', p.text));
     tip.appendChild(document.createTextNode(dLabel(p.date)));
     tip.style.display = 'block';
     const half = tip.offsetWidth / 2, cx = px(p) / W * box.width;
@@ -3157,22 +3109,69 @@ function renderChart() {
   body.appendChild(plot);
 
   // The same numbers as a list, newest first
-  const shown = Math.min(5, pts.length);
-  body.appendChild(elMk('div', 'chart-table-label', shown === 1 ? 'Last session' : `Last ${shown} sessions`));
+  const shown = Math.min(5, pts.length), [one, many] = cfg.noun;
+  body.appendChild(elMk('div', 'chart-table-label', shown === 1 ? `Last ${one}` : `Last ${shown} ${many}`));
   const table = elMk('div', 'chart-table');
   pts.slice(-5).reverse().forEach(p => {
     const row = elMk('div');
     row.appendChild(elMk('span', '', dLabel(p.date)));
-    row.appendChild(elMk('b', '', `${fmtNum(p.weight)} ${unit} × ${p.reps}`));
+    const val = elMk('b', '', p.text);
+    if (cfg.onDelete) {
+      const del = elMk('button', 'row-del', '✕');
+      del.setAttribute('aria-label', `Delete ${dLabel(p.date)}`);
+      del.addEventListener('click', () => cfg.onDelete(p));
+      val.appendChild(del);
+    }
+    row.appendChild(val);
     table.appendChild(row);
   });
   body.appendChild(table);
+}
+
+// Strength chart: heaviest set per session, or most reps for bodyweight exercises
+function renderChart() {
+  const sel = document.getElementById('chartSelect'), body = document.getElementById('chartBody');
+  body.innerHTML = ''; sel.innerHTML = '';
+  // Most-trained exercises first
+  const list = [...exHist.entries()].sort((a, b) => b[1].sessions.length - a[1].sessions.length || a[1].name.localeCompare(b[1].name));
+  if (!list.length) {
+    sel.style.display = 'none';
+    body.appendChild(elMk('div', 'chart-empty', 'Tick off a few sets and your strength for each exercise will be charted here.'));
+    return;
+  }
+  sel.style.display = '';
+  if (!exHist.has(chartEx)) chartEx = list[0][0];
+  list.forEach(([id, h]) => { const o = elMk('option', '', h.name); o.value = id; o.selected = id === chartEx; sel.appendChild(o); });
+
+  const h = exHist.get(chartEx);
+  // Never done with added weight: chart reps instead
+  const bodyweight = h.sessions.every(se => se.weight === 0);
+  const pts = bodyweight
+    ? h.sessions.map(se => ({ date: se.date, v: se.bwReps, reps: se.bwReps, text: `${se.bwReps} reps` }))
+    : h.sessions.filter(se => se.weight > 0).map(se => ({ date: se.date, v: se.weight, reps: se.reps, text: setText(se.weight, se.reps) }));
+  timeChart(body, {
+    pts, range: chartRange,
+    onRange: (r, temporary) => {
+      chartRange = r;
+      if (!temporary) try { localStorage.setItem('glog_chart_range', r); } catch (_) {}
+      renderChart();
+    },
+    what: `${h.name} sessions`,
+    noun: ['session', 'sessions'],
+    steps: bodyweight ? [1, 2, 5, 10, 20, 50] : undefined,
+    aria: `${h.name}: ${bodyweight ? 'most reps' : 'heaviest set'} per session`,
+    sub: inRange => {
+      const best = inRange.reduce((a, b) => b.v > a.v || (b.v === a.v && b.reps > a.reps) ? b : a);
+      return bodyweight ? `Most reps per session · best ${best.text}` : `Heaviest set per session · best ${best.text}`;
+    },
+  });
 }
 document.getElementById('chartSelect').addEventListener('change', e => { chartEx = e.target.value; renderChart(); });
 
 function renderProgress() {
   renderStats();
   renderChart();
+  renderBody();
   renderPhotoPreview();
 }
 
@@ -3446,7 +3445,7 @@ function summaryData(key) {
     dateStr: `${DFULL[(date.getDay() + 6) % 7]}, ${d} ${MONTHS[m - 1]} ${y}`,
   };
 }
-const topSetText = top => top ? `${fmtNum(top.weight)} ${unit} × ${top.reps}` : '';
+const topSetText = top => top ? setText(top.weight, top.reps) : '';
 
 function openSummary(key) {
   sumKey = key;
@@ -3616,6 +3615,7 @@ document.getElementById('btnExport').addEventListener('click', async e => {
     days: db,
     collections: templates.map(({ id, ...t }) => t),
     photos: photos.map(({ id, ...p }) => p),
+    bodyWeight: (await loadBody(), bodyLog),
   };
   downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `gymlog-export-${dateKey(new Date())}.json`);
   btn.disabled = false; btn.textContent = 'Export My Data';
@@ -3632,7 +3632,6 @@ const TOUR_STEPS = [
   { target: '#weekLabel', title: 'Month view', text: 'Tap the dates up here to see your whole month. Tap any day to jump straight to it.' },
   { target: '.edit-toggle', title: 'Build your workout', text: 'Tap Edit to add muscle groups, exercises and sets, then Save. Cancel undoes your changes.' },
   { target: '.ex-card', title: 'Log your sets', text: 'Enter weight and reps, then tap ✓ as you finish each set. Last session\'s numbers show underneath — tap them to fill the set in.' },
-  { target: '#fabBtn', title: 'Rest timer', text: 'Start a countdown between sets. Your phone buzzes when it\'s time to go again.' },
   { target: '#bnavLibrary', title: 'Collections', text: 'Save routines you repeat and apply them to any day in one tap. Starter routines are ready to use, and you can share yours by link.' },
   { target: '#bnavProgress', title: 'Progress', text: 'Your streak, a strength chart for every exercise, and photos to see how your physique changes.' },
   { target: '#userAvatar', title: 'You\'re all set 💪', text: 'Settings live here — you can replay this tour anytime.' },
@@ -3699,7 +3698,6 @@ function endTour() {
   }
   tour = null;
   document.getElementById('main').style.paddingTop = '';
-  document.getElementById('fabBtn').parentElement.style.visibility = '';
   tourEl.classList.remove('open');
   tourCard.classList.add('hidden');
   markTourDone();
@@ -3777,11 +3775,6 @@ function showTourStep(i) {
   }
   const vw = window.innerWidth, vh = window.innerHeight;
   const to = (step.target && tourTargetRect(step.target)) || { x: vw / 2, y: vh / 2, w: 0, h: 0 };
-
-  // On small screens the floating timer button can sit on top of the spotlit element — hide it then
-  const fab = document.getElementById('fabBtn').parentElement, fr = fab.getBoundingClientRect();
-  const overlaps = fr.left < to.x + to.w && fr.right > to.x && fr.top < to.y + to.h && fr.bottom > to.y;
-  fab.style.visibility = step.target !== '#fabBtn' && overlaps ? 'hidden' : '';
 
   // Fade the card out, glide the spotlight, then bring the card back in its new spot
   tourCard.classList.add('hidden');
@@ -3867,7 +3860,6 @@ document.getElementById('btnReplayTour').addEventListener('click', () => {
   startTour();
 });
 
-refreshTimer();
 </script>
 <div id="toastContainer" class="toast-container"></div>
 </body>
