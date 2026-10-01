@@ -600,6 +600,20 @@
     .studio-share { width: 100%; flex: none; }
     .studio-share:disabled { opacity: 0.4; cursor: not-allowed; }
     .share-day-btn { margin-top: 14px; }
+    .studio-pick-btn {
+      background: none; border: none; color: var(--accent); font-size: 14px; font-weight: 700; font-family: inherit;
+      cursor: pointer; padding: 2px; -webkit-tap-highlight-color: transparent;
+    }
+    .pick-overlay { z-index: 470; }
+    .pick-list { margin: 4px 0 18px; }
+    .pick-row {
+      display: flex; align-items: center; gap: 12px; padding: 12px 2px; border-bottom: 1px solid #222;
+      font-size: 15px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .pick-row input { width: 20px; height: 20px; accent-color: var(--accent); flex-shrink: 0; }
+    .pick-row span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pick-row .sum-val { color: var(--text-muted); display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .pick-row.off { opacity: 0.4; }
 
     /* ── Picking two photos to compare ── */
     .photo-card.selectable img { cursor: pointer; }
@@ -1242,8 +1256,23 @@
         <label class="small-btn studio-photo-btn" id="studioPhotoBtn" for="studioPhotoInput">Change photo</label>
         <input type="file" id="studioPhotoInput" accept="image/*" style="display:none">
       </div>
+      <button class="studio-pick-btn" id="btnStudioPick" type="button">Choose exercises</button>
       <p class="studio-hint" id="studioHint"></p>
       <button class="t-btn primary studio-share" id="btnStudioShare">Share</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Choose exercises for the share image ── -->
+<div class="overlay pick-overlay" id="pickOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sum-title">Choose exercises</div>
+    <div class="sum-date" id="pickNote"></div>
+    <div class="pick-list" id="pickList"></div>
+    <div class="t-controls" style="margin-bottom:0">
+      <button class="t-btn secondary" id="btnPickReset">Default</button>
+      <button class="t-btn primary" id="btnPickDone">Done</button>
     </div>
   </div>
 </div>
@@ -1939,10 +1968,11 @@ function prSetIndex(key, ex) {
   return -1;
 }
 
-function workoutStats() {
+// asOf: the streak as it stood in that day's week (defaults to today)
+function workoutStats(asOf = new Date()) {
   const worked = k => dayState(db[k]) === 'done';
   const weekCount = mon => { let n = 0; for (let i = 0; i < 7; i++) if (worked(dateKey(addDays(mon, i)))) n++; return n; };
-  const thisMon = getMonday(new Date()), thisWeek = weekCount(thisMon);
+  const thisMon = getMonday(asOf), thisWeek = weekCount(thisMon);
   // Weeks in a row with at least one workout. A week that has only just started doesn't break it.
   let streak = 0, mon = thisWeek ? thisMon : addDays(thisMon, -7);
   while (streak < 520 && weekCount(mon) > 0) { streak++; mon = addDays(mon, -7); }
@@ -3524,8 +3554,10 @@ function summaryData(key) {
   let sets = 0;
   for (const g of groups)
     for (const ex of (g.exercises || [])) {
+      const ticked = (ex.sets || []).filter(s => s.done).length;
+      if (!ticked) continue;   // planned but not done: not part of the summary
       const done = doneSets(ex);
-      sets += (ex.sets || []).filter(s => s.done).length;
+      sets += ticked;
       const top = done.length ? done.reduce((a, b) => b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a) : null;
       items.push({ name: ex.name || 'Exercise', top, pr: prSetIndex(key, ex) >= 0 });
     }
@@ -3583,7 +3615,7 @@ function downloadBlob(blob, filename) {
 // ─────────────────────────────────────────
 //  SHARE STUDIO  (Strava-style image of a workout)
 // ─────────────────────────────────────────
-const studio = { key: null, style: 'dark', format: 'story', photo: null, photoUrl: null };
+const studio = { key: null, style: 'dark', format: 'story', photo: null, photoUrl: null, pick: null };
 try {
   const saved = JSON.parse(localStorage.getItem('glog_share_style') || '{}');
   if (['dark', 'orange', 'photo', 'sticker'].includes(saved.style)) studio.style = saved.style;
@@ -3601,8 +3633,21 @@ function shareData(key) {
   const s = summaryData(key);
   const groups = [...new Set(((db[key] && db[key].groups) || []).map(g => (g.name || '').trim()).filter(Boolean))];
   const [y, m, d] = key.split('-').map(Number);
-  return { ...s, groups, streak: workoutStats().streak,
+  const tops = s.items.filter(it => it.top).map(it => it.top);
+  const topSet = tops.length ? tops.reduce((a, b) => b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a) : null;
+  return { ...s, groups, topSet, streak: workoutStats(new Date(y, m - 1, d)).streak,
            shortDate: `${d} ${MONTHS[m - 1]} ${y}`, weekday: DFULL[(new Date(y, m - 1, d).getDay() + 6) % 7] };
+}
+
+// Which exercises go on the card. Default: PRs first, then the rest in workout order.
+// pick: indices into items chosen by the user, or null for the default.
+const SHARE_MAX = { story: 6, square: 3 };
+function shareLifts(items, max, pick) {
+  const all = items.map((it, i) => ({ ...it, i })).filter(it => it.top);
+  const lifts = pick
+    ? all.filter(it => pick.includes(it.i)).slice(0, max)
+    : [...all.filter(it => it.pr), ...all.filter(it => !it.pr)].slice(0, max);
+  return { lifts, more: all.length - lifts.length };
 }
 
 // Draws the share image onto canvas c. Everything is laid out on a 1080-wide grid.
@@ -3681,7 +3726,10 @@ function drawStudio(c, data, style, format, photo) {
   }
 
   // ── blocks are stacked from the bottom up so the photo (or glow) stays visible at the top
-  const lifts = data.items.filter(it => it.top).slice(0, story ? 4 : 2);
+  const Z = story
+    ? { liftH: 68, name: 34, val: 46, prW: 66, prH: 36, prF: 21, stat: 116, statLbl: 124, statStep: 190, hero: 240, heroU: 72, heroLbl: 252, heroStep: 318, title: 116 }
+    : { liftH: 56, name: 29, val: 38, prW: 56, prH: 30, prF: 18, stat: 84,  statLbl: 92,  statStep: 142, hero: 150, heroU: 48, heroLbl: 160, heroStep: 210, title: 80 };
+  const { lifts, more } = data.share;
   let y = H - P;
   if (story && !sticker) {
     const left = data.streak >= 2 ? `${data.streak}-WEEK STREAK` : 'TRAINED WITH GYMLOG';
@@ -3690,56 +3738,62 @@ function drawStudio(c, data, style, format, photo) {
     y -= 76;
   }
 
-  // top lifts
-  const liftH = story ? 82 : 74;
+  // exercises left off the card are still counted, so say how many
+  if (more > 0) {
+    text(`+ ${more} MORE ${more === 1 ? 'EXERCISE' : 'EXERCISES'}`, P, y - 6, sans(Z.name - 8, 800), muted, 'left', 3);
+    y -= Z.liftH;
+  }
   for (let i = lifts.length - 1; i >= 0; i--) {
     const it = lifts[i], val = topSetText(it.top).toUpperCase();
-    const valFont = anton(story ? 54 : 48);
+    const valFont = anton(Z.val);
     const vw = width(val, valFont, 1);
     text(val, W - P, y, valFont, ink, 'right', 1);
-    let right = W - P - vw - 22;
+    let right = W - P - vw - 20;
     if (it.pr) {
-      const pw = 74, ph = 40;
-      pill(right - pw, y - 38, pw, ph, accent);
-      text('PR', right - pw / 2, y - 9, sans(24, 900), style === 'orange' ? '#ffa04a' : '#fff', 'center', 1);
-      right -= pw + 20;
+      const top = y - Z.val * 0.74;
+      pill(right - Z.prW, top, Z.prW, Z.prH, accent);
+      text('PR', right - Z.prW / 2, top + Z.prH / 2 + Z.prF * 0.36, sans(Z.prF, 900), style === 'orange' ? '#ffa04a' : '#fff', 'center', 1);
+      right -= Z.prW + 18;
     }
-    const nameFont = sans(story ? 38 : 34, 600);
-    text(fit(it.name, nameFont, right - P), P, y - 6, nameFont, ink);
-    y -= liftH;
+    const nameFont = sans(Z.name, 600);
+    text(fit(it.name, nameFont, right - P), P, y - 4, nameFont, ink);
+    y -= Z.liftH;
   }
-  if (lifts.length) {
-    g.save(); g.shadowColor = 'transparent'; g.fillStyle = rule; g.fillRect(P, y + 18, W - P * 2, 2); g.restore();
-    y -= 36;
+  if (lifts.length || more) {
+    g.save(); g.shadowColor = 'transparent'; g.fillStyle = rule; g.fillRect(P, y + 14, W - P * 2, 2); g.restore();
+    y -= 30;
   }
 
-  // three stats
+  // three stats: sets, exercises, and PRs (or the day's top set when there were none)
+  const top = data.topSet;
   const third = data.prs > 0 ? [String(data.prs), data.prs === 1 ? 'PR' : 'PRS']
-              : data.streak >= 2 ? [String(data.streak), 'WK STREAK'] : [String(data.items.length), 'EXERCISES'];
+              : top && top.weight > 0 ? [fmtNum(top.weight), `TOP SET · ${unit.toUpperCase()}`]
+              : top ? [String(top.reps), 'MOST REPS']
+              : [String(data.groups.length || '—'), data.groups.length === 1 ? 'MUSCLE GROUP' : 'MUSCLE GROUPS'];
   const stats = [[String(data.sets), data.sets === 1 ? 'SET' : 'SETS'],
-                 data.prs > 0 || data.streak >= 2 ? [String(data.items.length), data.items.length === 1 ? 'EXERCISE' : 'EXERCISES'] : [data.groups.length ? String(data.groups.length) : '—', data.groups.length === 1 ? 'MUSCLE GROUP' : 'MUSCLE GROUPS'],
+                 [String(data.items.length), data.items.length === 1 ? 'EXERCISE' : 'EXERCISES'],
                  third];
-  const colW = (W - P * 2) / 3, statFont = anton(story ? 124 : 104);
+  const colW = (W - P * 2) / 3, statFont = anton(Z.stat);
   stats.forEach(([v, label], i) => {
     const x = P + i * colW;
     text(v, x, y, statFont, ink);
-    text(label, x, y - (story ? 132 : 112), sans(24, 800), muted, 'left', 3);
+    text(label, x, y - Z.statLbl, sans(story ? 24 : 21, 800), muted, 'left', 3);
   });
-  y -= story ? 200 : 168;
+  y -= Z.statStep;
 
   // hero: total volume (or reps for an all-bodyweight day)
   const repsTotal = data.volume === 0;
   const heroVal = repsTotal ? String(data.items.reduce((n, it) => n + (it.top ? it.top.reps : 0), 0)) : data.volume.toLocaleString();
   const heroUnit = repsTotal ? 'REPS' : unit.toUpperCase();
-  const heroFont = anton(story ? 250 : 196);
+  const heroFont = anton(Z.hero);
   text(heroVal, P - 6, y, heroFont, ink, 'left', 1);
-  text(heroUnit, P + width(heroVal, heroFont, 1) + 18, y - 14, anton(story ? 76 : 62), accent, 'left', 2);
-  text(repsTotal ? 'TOP-SET REPS' : 'TOTAL VOLUME', P, y - (story ? 262 : 206), sans(26, 800), muted, 'left', 4);
-  y -= story ? 330 : 262;
+  text(heroUnit, P + width(heroVal, heroFont, 1) + 16, y - 12, anton(Z.heroU), accent, 'left', 2);
+  text(repsTotal ? 'TOP-SET REPS' : 'TOTAL VOLUME', P, y - Z.heroLbl, sans(story ? 26 : 22, 800), muted, 'left', 4);
+  y -= Z.heroStep;
 
   // title: what was trained
   const title = (data.groups.length ? data.groups.join(' · ') : 'Workout').toUpperCase();
-  let tSize = story ? 120 : 96;
+  let tSize = Z.title;
   const words = title.split(' ');
   const lines = [];
   const wrap = size => {
@@ -3755,7 +3809,7 @@ function drawStudio(c, data, style, format, photo) {
   if (lines.length > 2) { lines.length = 2; lines[1] = fit(lines[1], anton(tSize), W - P * 2); }
   for (let i = lines.length - 1; i >= 0; i--) { text(lines[i], P - 4, y, anton(tSize), ink, 'left', 1); y -= tSize * 0.98; }
   const kicker = sticker ? `GYMLOG  ·  ${data.shortDate.toUpperCase()}` : 'WORKOUT COMPLETE';
-  text(kicker, P, y + tSize * 0.98 - tSize - 14, sans(26, 800), accent, 'left', 4);
+  text(kicker, P, y + tSize * 0.98 - tSize - 14, sans(story ? 26 : 22, 800), accent, 'left', 4);
   g.shadowColor = 'transparent';
 
   // A sticker is only as big as its content, so it drops neatly onto a story
@@ -3777,7 +3831,14 @@ function renderStudio() {
   const c = document.getElementById('studioCanvas'), stage = document.getElementById('studioStage');
   const needsPhoto = studio.style === 'photo' && !studio.photo;
   // A sticker always uses the roomier story layout; it is trimmed to its content anyway
-  drawStudio(c, shareData(studio.key), studio.style, studio.style === 'sticker' ? 'story' : studio.format, studio.photo);
+  const format = studio.style === 'sticker' ? 'story' : studio.format;
+  const data = shareData(studio.key);
+  data.share = shareLifts(data.items, SHARE_MAX[format], studio.pick);
+  drawStudio(c, data, studio.style, format, studio.photo);
+  const total = data.items.filter(it => it.top).length, shown = data.share.lifts.length;
+  document.getElementById('btnStudioPick').textContent =
+    total ? `Choose exercises · ${shown} of ${total} shown` : 'Choose exercises';
+  document.getElementById('btnStudioPick').style.display = total > 1 ? '' : 'none';
   stage.classList.toggle('needs-photo', needsPhoto);
   stage.classList.toggle('is-sticker', studio.style === 'sticker');
   c.style.visibility = needsPhoto ? 'hidden' : '';
@@ -3798,6 +3859,7 @@ function renderStudio() {
 async function openStudio(key) {
   if (!key || !db[key]) return;
   studio.key = key;
+  studio.pick = null;   // a custom choice is for one share only
   document.getElementById('studioOverlay').classList.add('open');
   renderStudio();
   await loadAnton();            // first open: redraw once the display font is ready
@@ -3847,6 +3909,44 @@ document.getElementById('btnStudioShare').addEventListener('click', async () => 
   downloadBlob(blob, file.name);
   showToast('Image saved', 'success');
 });
+// ── Choosing which exercises appear on the card ──
+function openPicker() {
+  const format = studio.style === 'sticker' ? 'story' : studio.format, max = SHARE_MAX[format];
+  const data = shareData(studio.key);
+  const current = new Set(shareLifts(data.items, max, studio.pick).lifts.map(it => it.i));
+  const list = document.getElementById('pickList');
+  list.innerHTML = '';
+  document.getElementById('pickNote').textContent = `Up to ${max} fit on a ${format === 'story' ? 'story' : 'square'} image. The rest are counted as “+ more”.`;
+  const sync = () => {
+    const boxes = [...list.querySelectorAll('input')], n = boxes.filter(b => b.checked).length;
+    boxes.forEach(b => { b.disabled = !b.checked && n >= max; b.closest('.pick-row').classList.toggle('off', b.disabled); });
+  };
+  data.items.forEach((it, i) => {
+    if (!it.top) return;
+    const row = elMk('label', 'pick-row');
+    const box = document.createElement('input');
+    box.type = 'checkbox'; box.value = String(i); box.checked = current.has(i);
+    box.addEventListener('change', sync);
+    row.appendChild(box);
+    row.appendChild(elMk('span', '', it.name));
+    const val = elMk('span', 'sum-val');
+    if (it.pr) val.appendChild(elMk('span', 'pr-badge', 'PR'));
+    val.appendChild(document.createTextNode(topSetText(it.top)));
+    row.appendChild(val);
+    list.appendChild(row);
+  });
+  sync();
+  document.getElementById('pickOverlay').classList.add('open');
+}
+const closePicker = () => document.getElementById('pickOverlay').classList.remove('open');
+document.getElementById('btnStudioPick').addEventListener('click', openPicker);
+document.getElementById('btnPickDone').addEventListener('click', () => {
+  studio.pick = [...document.querySelectorAll('#pickList input:checked')].map(b => +b.value);
+  closePicker(); renderStudio();
+});
+document.getElementById('btnPickReset').addEventListener('click', () => { studio.pick = null; closePicker(); renderStudio(); });
+document.getElementById('pickOverlay').addEventListener('click', e => { if (e.target === document.getElementById('pickOverlay')) closePicker(); });
+
 document.getElementById('btnSumShare').addEventListener('click', () => {
   const key = sumKey;
   document.getElementById('sumOverlay').classList.remove('open');
