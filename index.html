@@ -3627,15 +3627,41 @@ document.getElementById('btnExport').addEventListener('click', async e => {
 // ─────────────────────────────────────────
 const tourKey = () => `glog_tour_done_${currentUid}`;
 const TOUR_STEPS = [
-  { title: 'Welcome to GymLog 👋', text: 'Here\'s a quick 30-second tour of how everything works.' },
-  { target: '#dayTabs', title: 'Your week', text: 'Tap any day to plan or log that day\'s workout. Use ‹ › up top to move between weeks.' },
-  { target: '#weekLabel', title: 'Month view', text: 'Tap the dates up here to see your whole month. Tap any day to jump straight to it.' },
-  { target: '.edit-toggle', title: 'Build your workout', text: 'Tap Edit to add muscle groups, exercises and sets, then Save. Cancel undoes your changes.' },
-  { target: '.ex-card', title: 'Log your sets', text: 'Enter weight and reps, then tap ✓ as you finish each set. Last session\'s numbers show underneath — tap them to fill the set in.' },
-  { target: '#bnavLibrary', title: 'Collections', text: 'Save routines you repeat and apply them to any day in one tap. Starter routines are ready to use, and you can share yours by link.' },
-  { target: '#bnavProgress', title: 'Progress', text: 'Your streak, a strength chart for every exercise, and photos to see how your physique changes.' },
-  { target: '#userAvatar', title: 'You\'re all set 💪', text: 'Settings live here — you can replay this tour anytime.' },
+  { page: 'workout', title: 'Welcome to GymLog 👋',
+    text: 'This tour shows you each part of the app, page by page. It takes about a minute. Use Next and Back to move through it.' },
+  { page: 'workout', target: '#dayTabs', title: 'Your week',
+    text: 'Each day has its own workout. Tap a day to plan or log it, and use ‹ › at the top to move between weeks. A dot means that day has exercises.' },
+  { page: 'workout', target: '#weekLabel', title: 'Month view',
+    text: 'Tap the dates to open the month view. Solid marks are days you trained, outlined ones are planned, and purple ones are rest days. Tap any date to jump to it.' },
+  { page: 'workout', target: '#main .ex-card', title: 'Log your sets',
+    text: 'Enter the weight and reps for each set, then tap ✓ when it’s done. For bodyweight moves like pull-ups, leave the weight empty and just enter the reps.' },
+  { page: 'workout', target: '#main .set-prev-hint', title: 'Know what to beat',
+    text: 'Under each set is what you did last session. Tap it to fill the set with those numbers. Beat your best and the exercise gets a PR badge.' },
+  { page: 'workout', target: '#main .edit-toggle', title: 'Build or change a workout',
+    text: 'Tap Edit to add muscle groups, exercises and sets, rename them, or reorder them with ↑ ↓. Save keeps your changes; Cancel undoes them.' },
+  { page: 'workout', target: '#main .rest-btn', title: 'Rest days',
+    text: 'Mark a day as a rest day so your calendar shows it. On an empty day you’ll also see “Start from a routine” to fill the whole day in one tap.' },
+  { page: 'library', target: '#btnNewTpl', title: 'Collections',
+    text: 'Collections are routines you repeat, like a Push Day. Tap + New to build one, then apply it to any day with “Start from a routine”.' },
+  { page: 'library', target: '#starterWrap .starter-head', title: 'Starter routines',
+    text: 'Ready-made routines to get you going. + Add moves one into your collections, and Remove all clears the ones you don’t need.' },
+  { page: 'library', target: '#tplList .tpl-card', title: 'Edit and share',
+    text: 'Tap a collection to edit it. The 🔗 button inside creates a link, so a friend can add your routine to their own GymLog.' },
+  { page: 'progress', target: '#statRow', title: 'Stay consistent',
+    text: 'Workouts this week, how many weeks in a row you’ve trained, and your total. Any week with a completed workout keeps the streak going.' },
+  { page: 'progress', target: ['#chartBody .chart-plot', '#progressView .chart-card'], title: 'Strength chart',
+    text: 'Pick an exercise to see your heaviest set each session, or most reps for bodyweight moves. Switch between 3M, 6M, 1Y and All, and touch the chart to read any session.' },
+  { page: 'progress', target: '#bwForm', title: 'Body weight',
+    text: 'Log your weight whenever you like, once a day at most. As entries build up, a chart shows your trend and how much it’s changed.' },
+  { page: 'progress', target: '.prog-photos-head', title: 'Progress photos',
+    text: 'Your latest photos show here. See all opens every photo grouped by month, where you can add new ones and compare any two side by side.' },
+  { page: 'settings', target: '#unitSeg', title: 'Settings',
+    text: 'Tap your profile picture at the top to open Settings. Switch between kg and lb, export all your data, replay this tour, or delete your account.' },
+  { page: 'workout', title: 'You’re all set 💪',
+    text: 'Pick a day and add your first workout, or start from a routine. Have a good session.' },
 ];
+// The previous-session hint shown on the sample exercise
+const DEMO_PREV = [{ weight: '57.5', reps: '10' }, { weight: '57.5', reps: '8' }];
 const DEMO_DAY = { rest: false, groups: [{ name: 'Chest', exercises: [{ name: 'Bench Press', sets: [
   { weight: '60', reps: '10', done: true }, { weight: '60', reps: '8', done: false },
 ] }] }] };
@@ -3646,6 +3672,21 @@ const tourRing = document.getElementById('tourRing');
 const tourCard = document.getElementById('tourCard');
 const tourReduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let tour = null; // { steps, idx, rect, anim, demoKey, demoOrig }
+
+// Show the page a step belongs to, without touching anything the user has saved
+function goTourPage(page) {
+  const so = document.getElementById('settingsOverlay');
+  if (page === 'settings') { so.classList.add('visible'); so.style.display = 'flex'; return; }
+  so.classList.remove('visible'); so.style.display = 'none';
+  const tab = { workout: 'bnavWorkout', library: 'bnavLibrary', progress: 'bnavProgress' }[page];
+  if (!document.getElementById(tab).classList.contains('active')) switchTab(page);
+}
+
+// The first of a step's selectors that is on screen right now
+function resolveTourTarget(target) {
+  for (const sel of [].concat(target || [])) if (tourTargetRect(sel)) return sel;
+  return null;
+}
 
 function isTourDone() {
   try { if (localStorage.getItem(tourKey())) return true; } catch (_) {}
@@ -3679,12 +3720,20 @@ function startTour() {
   const key = dateKey(new Date()), orig = db[key];
   const hasEx = orig && !orig.rest && (orig.groups || []).some(g => g.exercises && g.exercises.length);
   tour = { idx: 0, rect: null, anim: 0, demoKey: hasEx ? null : key, demoOrig: orig };
-  if (!hasEx) db[key] = JSON.parse(JSON.stringify(DEMO_DAY));
+  if (!hasEx) {
+    db[key] = JSON.parse(JSON.stringify(DEMO_DAY));
+    prevData['bench press'] = DEMO_PREV;   // so the "what to beat" step has something to point at
+  }
   render();
-  document.getElementById('main').scrollTop = 0;
+  for (const id of ['main', 'libraryView', 'progressView']) document.getElementById(id).scrollTop = 0;
 
-  // Skip steps whose element isn't on screen (e.g. no profile photo)
-  tour.steps = TOUR_STEPS.filter(s => !s.target || tourTargetRect(s.target));
+  // Visit each step's page once to keep only the steps whose element exists for this user
+  // (e.g. "Edit and share" needs at least one collection), then start on the Workout page
+  tour.steps = TOUR_STEPS.map(st => {
+    goTourPage(st.page);
+    return { ...st, sel: st.target ? resolveTourTarget(st.target) : null };
+  }).filter(st => !st.target || st.sel);
+  goTourPage('workout');
   tourEl.classList.add('open');
   showTourStep(0);
 }
@@ -3695,9 +3744,11 @@ function endTour() {
   if (tour.demoKey) {
     if (tour.demoOrig === undefined) delete db[tour.demoKey];
     else db[tour.demoKey] = tour.demoOrig;
+    computePrevData();
   }
   tour = null;
   document.getElementById('main').style.paddingTop = '';
+  goTourPage('workout');
   tourEl.classList.remove('open');
   tourCard.classList.add('hidden');
   markTourDone();
@@ -3761,27 +3812,30 @@ function tourBounds() {
 function showTourStep(i) {
   const step = tour.steps[i];
   tour.idx = i;
+  goTourPage(step.page);
   const main = document.getElementById('main');
   main.style.paddingTop = '';
-  const el = step.target && document.querySelector(step.target);
+  const el = step.sel && document.querySelector(step.sel);
   if (el && el.closest('main')) {
     el.scrollIntoView({ block: 'end' });
     // Short screens: if the card fits neither above nor below, push the page content down to make room above
-    const r = tourTargetRect(step.target), ch = measureTourCard(i), { minTop, maxBottom, gap } = tourBounds();
+    const r = tourTargetRect(step.sel), ch = measureTourCard(i), { minTop, maxBottom, gap } = tourBounds();
     if (r && r.y - gap - ch < minTop && r.y + r.h + gap + ch > maxBottom) {
       main.style.paddingTop = `${16 + minTop + ch + gap - r.y}px`;
       el.scrollIntoView({ block: 'end' });
     }
+  } else if (el && el.closest('#libraryView, #progressView, .settings-body')) {
+    el.scrollIntoView({ block: 'center' });
   }
   const vw = window.innerWidth, vh = window.innerHeight;
-  const to = (step.target && tourTargetRect(step.target)) || { x: vw / 2, y: vh / 2, w: 0, h: 0 };
+  const to = (step.sel && tourTargetRect(step.sel)) || { x: vw / 2, y: vh / 2, w: 0, h: 0 };
 
   // Fade the card out, glide the spotlight, then bring the card back in its new spot
   tourCard.classList.add('hidden');
-  tourRing.style.opacity = step.target ? '1' : '0';
+  tourRing.style.opacity = step.sel ? '1' : '0';
   tweenTourRect(tour.rect || { x: vw / 2, y: vh / 2, w: 0, h: 0 }, to, () => {
     fillTourCard(tourCard, i);
-    placeTourCard(step.target ? to : null);
+    placeTourCard(step.sel ? to : null);
     tourCard.classList.remove('hidden');
   });
 }
@@ -3849,7 +3903,7 @@ document.addEventListener('keydown', e => {
 window.addEventListener('resize', () => {
   if (!tour || !tour.rect) return;
   const step = tour.steps[tour.idx];
-  const r = step.target && tourTargetRect(step.target);
+  const r = step.sel && tourTargetRect(step.sel);
   const vw = window.innerWidth, vh = window.innerHeight;
   tour.rect = r || { x: vw / 2, y: vh / 2, w: 0, h: 0 };
   drawTourRect(tour.rect);
