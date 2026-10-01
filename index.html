@@ -587,6 +587,55 @@
     }
     .add-photo-btn:active { opacity: 0.8; }
     .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (min-width: 700px) { .photo-grid { grid-template-columns: repeat(4, 1fr); } }
+    .prog-photos-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .prog-photos-head .prog-section-title { margin-bottom: 0; }
+    .see-all-btn {
+      background: none; border: none; color: var(--accent); font-size: 14px; font-weight: 700;
+      font-family: inherit; cursor: pointer; padding: 6px 2px; -webkit-tap-highlight-color: transparent;
+    }
+    .compare-btn { margin-top: 12px; }
+
+    /* ── All photos + compare pages ── */
+    .gallery-overlay { display: none; position: fixed; inset: 0; z-index: 400; background: var(--bg); flex-direction: column; }
+    .gallery-overlay.open { display: flex; }
+    .compare-overlay { z-index: 450; }
+    .gallery-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0;
+      padding: var(--sat) var(--gutter-r) 0 var(--gutter-l); height: var(--top-h); border-bottom: 1px solid #222;
+    }
+    .gallery-title-wrap { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .head-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .small-btn {
+      background: var(--surface2); border: 1px solid #333; color: var(--text); border-radius: 20px;
+      padding: 8px 14px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .small-btn:active { background: var(--surface3); }
+    .gallery-body {
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+      padding: 4px max(14px, var(--sar)) calc(24px + var(--sab)) max(14px, var(--sal));
+    }
+    .gallery-month {
+      font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 0.8px; margin: 18px 2px 10px;
+    }
+    .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    @media (min-width: 700px) { .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; } }
+    .gallery-grid .photo-card { border-radius: 9px; }
+    .gallery-more { text-align: center; color: var(--text-muted); font-size: 13px; padding: 22px 0 8px; }
+    .compare-gap { grid-column: 1 / -1; text-align: center; color: var(--accent); font-size: 15px; font-weight: 700; padding-bottom: 4px; }
+    .compare-body {
+      flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: center;
+      padding: 12px max(14px, var(--sar)) calc(24px + var(--sab)) max(14px, var(--sal));
+      max-width: 900px; width: 100%; margin: 0 auto; overflow-y: auto;
+    }
+    .compare-col img {
+      width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 12px; background: var(--surface);
+      display: block; cursor: pointer;
+    }
+    .compare-label { text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+    .compare-label b { display: block; color: var(--text); font-size: 14px; margin-bottom: 1px; }
     .photo-card {
       position: relative; border-radius: 12px; overflow: hidden;
       background: var(--surface); aspect-ratio: 3/4;
@@ -1136,13 +1185,43 @@
     </div>
     <div id="chartBody"></div>
   </div>
-  <h3 class="prog-section-title">Photos</h3>
+  <div class="prog-photos-head">
+    <h3 class="prog-section-title">Photos</h3>
+    <button class="see-all-btn" id="btnSeeAllPhotos">See all</button>
+  </div>
   <div class="photo-grid" id="photoGrid"></div>
+  <button class="use-tpl-btn compare-btn" id="btnCompare">⇆ Compare first and latest</button>
   <div class="prog-empty" id="progEmpty">
     <div class="empty-icon">📷</div>
     <h3>No photos yet</h3>
     <p>Tap "Add Photo" to start<br>tracking your progress.</p>
   </div>
+</div>
+
+<!-- ── All Photos Page ── -->
+<div class="gallery-overlay" id="galleryOverlay">
+  <div class="gallery-header">
+    <div class="gallery-title-wrap">
+      <button class="back-btn" id="btnCloseGallery">&#8592;</button>
+      <span class="settings-title" id="galleryTitle">Photos</span>
+    </div>
+    <div class="head-actions">
+      <button class="small-btn" id="btnGalleryCompare">Compare</button>
+      <label class="add-photo-btn" for="photoInput">+ Add</label>
+    </div>
+  </div>
+  <div class="gallery-body" id="galleryBody"></div>
+</div>
+
+<!-- ── Compare Page ── -->
+<div class="gallery-overlay compare-overlay" id="compareOverlay">
+  <div class="gallery-header">
+    <div class="gallery-title-wrap">
+      <button class="back-btn" id="btnCloseCompare">&#8592;</button>
+      <span class="settings-title">Compare</span>
+    </div>
+  </div>
+  <div class="compare-body" id="compareBody"></div>
 </div>
 
 <!-- ── Photo Viewer ── -->
@@ -1285,7 +1364,8 @@ import { getAuth, GoogleAuthProvider, signInWithPopup,
          sendPasswordResetEmail, getAdditionalUserInfo }       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, initializeFirestore, persistentLocalCache,
          persistentMultipleTabManager, collection, doc, getDoc,
-         getDocs, setDoc, deleteDoc, query, where }            from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+         getDocs, setDoc, deleteDoc, query, where,
+         orderBy, limit, startAfter, getCountFromServer }            from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // ─────────────────────────────────────────
 //  FIREBASE INIT
@@ -1496,7 +1576,7 @@ onAuthStateChanged(auth, async (user) => {
     hide('appRoot');
 
     // Photos are heavy and only needed on the Progress tab, so they load when it's first opened
-    photos = []; photosLoaded = false;
+    resetPhotos();
     await Promise.all([loadFromFirestore(), loadTemplates(), loadProfile()]);
 
     // Accounts without a picture (email sign-in) get their initial, so Settings is always reachable
@@ -1520,7 +1600,8 @@ onAuthStateChanged(auth, async (user) => {
   } else {
     currentUid = null;
     pendingSaves.forEach(t => clearTimeout(t)); pendingSaves.clear();
-    db = {}; templates = []; photos = []; photosLoaded = false; profile = {};
+    db = {}; templates = []; resetPhotos(); profile = {};
+    closeGallery(); document.getElementById('compareOverlay').classList.remove('open');
     show('authScreen');
     hide('loadingScreen');
     hide('appRoot');
@@ -2821,8 +2902,20 @@ document.getElementById('bnavLibrary').addEventListener('click', () => switchTab
 // ─────────────────────────────────────────
 //  PROGRESS PHOTOS
 // ─────────────────────────────────────────
-let photos = [];
-let photosLoaded = false, photosLoading = false;
+// Photos are fetched newest first, a page at a time, so a long history never loads in one go
+const PHOTO_PAGE = 12;
+let photos = [];              // newest first: every photo loaded so far
+let photosAll = false;        // the oldest photo has been reached
+let photosLoading = false;
+let photosStarted = false;    // the first page has been requested for this account
+let photoCursor = null;       // last document of the latest page, to continue from
+let photoCount = null;        // total on the server (null while unknown, e.g. offline)
+let firstPhoto = null;        // the oldest photo, for Compare
+
+function resetPhotos() {
+  photos = []; photosAll = false; photosLoading = false; photosStarted = false;
+  photoCursor = null; photoCount = null; firstPhoto = null;
+}
 let chartEx = null; // exercise (lowercase name) shown in the strength chart
 const CHART_RANGES = { '3M': 91, '6M': 182, '1Y': 365, 'All': 0 };   // days back; 0 = everything
 const RANGE_WORDS  = { '3M': '3 months', '6M': '6 months', '1Y': 'year', 'All': 'while' };
@@ -2842,29 +2935,66 @@ function switchTab(tab) {
   document.getElementById('bnavLibrary').classList.toggle('active',  isLibrary);
   document.getElementById('bnavProgress').classList.toggle('active', isProgress);
   if (isProgress) {
-    if (!photosLoaded && !photosLoading)
-      loadPhotos().then(() => { if (document.getElementById('progressView').classList.contains('active')) renderProgress(); });
+    startPhotos();
     renderProgress();
   }
   if (isLibrary)  renderLibrary();
 }
 
-async function loadPhotos() {
-  if (!currentUid || photosLoaded) return;
+// First visit to Progress: the newest page, the total count and the oldest photo
+function startPhotos() {
+  if (photosStarted || !currentUid) return;
+  photosStarted = true;
+  Promise.all([loadPhotoPage(), loadPhotoMeta()]).then(renderPhotosEverywhere);
+}
+
+async function loadPhotoPage() {
+  if (!currentUid || photosAll || photosLoading) return;
   const uid = currentUid;
   photosLoading = true;
   try {
-    const snap = await getDocs(collection(fdb, 'users', uid, 'photos'));
+    const parts = [orderBy('timestamp', 'desc')];
+    if (photoCursor) parts.push(startAfter(photoCursor));
+    parts.push(limit(PHOTO_PAGE));
+    const snap = await getDocs(query(collection(fdb, 'users', uid, 'photos'), ...parts));
     if (uid === currentUid) {
-      // Keep anything added while this was loading
-      const loaded = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const ids = new Set(loaded.map(p => p.id));
-      photos = loaded.concat(photos.filter(p => !ids.has(p.id))).sort((a, b) => b.timestamp - a.timestamp);
-      photosLoaded = true;
+      const ids = new Set(photos.map(p => p.id));
+      snap.docs.forEach(d => { if (!ids.has(d.id)) photos.push({ id: d.id, ...d.data() }); });
+      photos.sort((a, b) => b.timestamp - a.timestamp);
+      if (snap.docs.length) photoCursor = snap.docs[snap.docs.length - 1];
+      if (snap.docs.length < PHOTO_PAGE) photosAll = true;
     }
-  } catch(_) {}
+  } catch (_) {}
   photosLoading = false;
 }
+
+async function loadPhotoMeta() {
+  const uid = currentUid, col = collection(fdb, 'users', uid, 'photos');
+  try { const c = await getCountFromServer(col); if (uid === currentUid) photoCount = c.data().count; } catch (_) {}
+  await loadFirstPhoto();
+}
+
+async function loadFirstPhoto() {
+  const uid = currentUid;
+  try {
+    const snap = await getDocs(query(collection(fdb, 'users', uid, 'photos'), orderBy('timestamp', 'asc'), limit(1)));
+    if (uid === currentUid) firstPhoto = snap.docs[0] ? { id: snap.docs[0].id, ...snap.docs[0].data() } : null;
+  } catch (_) {}
+}
+
+// Everything, for the data export
+async function loadAllPhotos() {
+  startPhotos();
+  while (!photosAll && currentUid) {
+    const before = photos.length;
+    if (photosLoading) { await new Promise(r => setTimeout(r, 100)); continue; }
+    await loadPhotoPage();
+    if (photos.length === before && !photosAll) return false;   // couldn't load more (offline)
+  }
+  return photosAll;
+}
+
+const knownPhotoCount = () => photoCount != null ? photoCount : photosAll ? photos.length : null;
 
 function renderStats() {
   const s = workoutStats(), row = document.getElementById('statRow');
@@ -3018,35 +3148,134 @@ document.getElementById('chartSelect').addEventListener('change', e => { chartEx
 function renderProgress() {
   renderStats();
   renderChart();
+  renderPhotoPreview();
+}
+
+function photoCard(p) {
+  const card = elMk('div', 'photo-card');
+  const img = document.createElement('img');
+  img.src = p.url; img.loading = 'lazy'; img.alt = `Progress photo, ${p.dateStr}`;
+  img.addEventListener('click', () => openViewer(p));
+  const date = elMk('div', 'photo-date', p.dateStr);
+  const del = elMk('button', 'photo-del', '✕');
+  del.setAttribute('aria-label', 'Delete photo');
+  del.addEventListener('click', async e => {
+    e.stopPropagation();
+    if (!confirm('Delete this photo?')) return;
+    await deletePhoto(p);
+  });
+  card.appendChild(img); card.appendChild(date); card.appendChild(del);
+  return card;
+}
+
+const canCompare = () => !!(firstPhoto && photos[0] && firstPhoto.id !== photos[0].id);
+
+// Progress tab: just the latest few, with links to the full page and to Compare
+function renderPhotoPreview() {
   const grid  = document.getElementById('photoGrid');
   const empty = document.getElementById('progEmpty');
+  const seeAll = document.getElementById('btnSeeAllPhotos');
   grid.innerHTML = '';
+  const n = knownPhotoCount();
+  seeAll.textContent = n != null ? `See all (${n})` : 'See all';
+  seeAll.style.display = photos.length ? '' : 'none';
+  document.getElementById('btnCompare').style.display = canCompare() ? '' : 'none';
   if (photos.length === 0) {
     empty.style.display = '';
-    empty.querySelector('h3').textContent = photosLoading ? 'Loading photos…' : 'No photos yet';
-    empty.querySelector('p').style.display = photosLoading ? 'none' : '';
+    const loading = photosLoading || (photosStarted && !photosAll && !photoCursor);
+    empty.querySelector('h3').textContent = loading ? 'Loading photos…' : 'No photos yet';
+    empty.querySelector('p').style.display = loading ? 'none' : '';
     return;
   }
   empty.style.display = 'none';
-  photos.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'photo-card';
-    const img = document.createElement('img');
-    img.src = p.url; img.loading = 'lazy';
-    img.addEventListener('click', () => openViewer(p));
-    const date = document.createElement('div');
-    date.className = 'photo-date'; date.textContent = p.dateStr;
-    const del = document.createElement('button');
-    del.className = 'photo-del'; del.textContent = '✕';
-    del.addEventListener('click', async e => {
-      e.stopPropagation();
-      if (!confirm('Delete this photo?')) return;
-      await deletePhoto(p);
-    });
-    card.appendChild(img); card.appendChild(date); card.appendChild(del);
-    grid.appendChild(card);
-  });
+  photos.slice(0, 4).forEach(p => grid.appendChild(photoCard(p)));
 }
+
+// ── All photos page: grouped by month, next page loads as you near the bottom ──
+let galleryObserver = null;
+
+function openGallery() {
+  document.getElementById('galleryOverlay').classList.add('open');
+  renderGallery();
+}
+function closeGallery() {
+  document.getElementById('galleryOverlay').classList.remove('open');
+  if (galleryObserver) { galleryObserver.disconnect(); galleryObserver = null; }
+}
+
+function renderGallery() {
+  const overlay = document.getElementById('galleryOverlay');
+  if (!overlay.classList.contains('open')) return;
+  const body = document.getElementById('galleryBody'), keep = body.scrollTop;
+  const n = knownPhotoCount();
+  document.getElementById('galleryTitle').textContent = n != null ? `Photos (${n})` : 'Photos';
+  document.getElementById('btnGalleryCompare').style.display = canCompare() ? '' : 'none';
+  body.innerHTML = '';
+  if (galleryObserver) { galleryObserver.disconnect(); galleryObserver = null; }
+  if (!photos.length) {
+    body.appendChild(elMk('div', 'gallery-more', photosLoading ? 'Loading…' : 'No photos yet.'));
+    return;
+  }
+  let month = '', grid = null;
+  photos.forEach(p => {
+    const d = new Date(p.timestamp), label = `${MONTHS_FULL[d.getMonth()]} ${d.getFullYear()}`;
+    if (label !== month) {
+      month = label;
+      body.appendChild(elMk('div', 'gallery-month', label));
+      grid = elMk('div', 'gallery-grid');
+      body.appendChild(grid);
+    }
+    grid.appendChild(photoCard(p));
+  });
+  if (!photosAll) {
+    const more = elMk('div', 'gallery-more', 'Loading more…');
+    body.appendChild(more);
+    galleryObserver = new IntersectionObserver(entries => {
+      if (!entries.some(e => e.isIntersecting) || photosLoading) return;
+      loadPhotoPage().then(renderPhotosEverywhere);
+    }, { root: body, rootMargin: '600px 0px' });
+    galleryObserver.observe(more);
+  }
+  body.scrollTop = keep;
+}
+
+// ── Compare: first photo next to the latest ──
+function openCompare() {
+  if (!canCompare()) return;
+  const first = firstPhoto, latest = photos[0];
+  const days = Math.round((latest.timestamp - first.timestamp) / 864e5);
+  const months = Math.round(days / 30.4);
+  const gap =
+    days < 60 ? `${days} ${days === 1 ? 'day' : 'days'} apart`
+    : months < 24 ? `${months} months apart`
+    : `${(days / 365).toFixed(1)} years apart`;
+  const body = document.getElementById('compareBody');
+  body.innerHTML = '';
+  body.appendChild(elMk('div', 'compare-gap', gap));
+  [[first, 'First'], [latest, 'Latest']].forEach(([p, label]) => {
+    const col = elMk('div', 'compare-col');
+    const img = document.createElement('img');
+    img.src = p.url; img.alt = `${label} photo, ${p.dateStr}`;
+    img.addEventListener('click', () => openViewer(p));
+    const cap = elMk('div', 'compare-label');
+    cap.appendChild(elMk('b', '', label));
+    cap.appendChild(document.createTextNode(p.dateStr));
+    col.appendChild(img); col.appendChild(cap);
+    body.appendChild(col);
+  });
+  document.getElementById('compareOverlay').classList.add('open');
+}
+
+function renderPhotosEverywhere() {
+  if (document.getElementById('progressView').classList.contains('active')) renderPhotoPreview();
+  renderGallery();
+}
+
+document.getElementById('btnSeeAllPhotos').addEventListener('click', openGallery);
+document.getElementById('btnCloseGallery').addEventListener('click', closeGallery);
+document.getElementById('btnCompare').addEventListener('click', openCompare);
+document.getElementById('btnGalleryCompare').addEventListener('click', openCompare);
+document.getElementById('btnCloseCompare').addEventListener('click', () => document.getElementById('compareOverlay').classList.remove('open'));
 
 // Resize + compress image → base64 JPEG (keeps Firestore doc well under 1 MB)
 function resizeAndEncode(file, maxPx = 600, quality = 0.65) {
@@ -3079,11 +3308,16 @@ async function uploadPhoto(file) {
     // Not awaited: offline, the write is kept on the device and sent later
     setDoc(doc(fdb, 'users', currentUid, 'photos', String(ts)), meta).catch(() => {
       photos = photos.filter(x => x.id !== String(ts));
-      renderProgress();
+      if (photoCount != null) photoCount--;
+      if (firstPhoto && firstPhoto.id === String(ts)) firstPhoto = null;
+      renderPhotosEverywhere();
       showToast('Failed to save photo — try again', 'error');
     });
-    photos.unshift({ id: String(ts), ...meta });
-    renderProgress();
+    const added = { id: String(ts), ...meta };
+    photos.unshift(added);
+    if (photoCount != null) photoCount++;
+    if (!firstPhoto) firstPhoto = added;
+    renderPhotosEverywhere();
     showToast('Photo saved!', 'success');
   } catch(e) {
     console.error(e);
@@ -3096,7 +3330,15 @@ async function deletePhoto(p) {
   deleteDoc(doc(fdb, 'users', currentUid, 'photos', p.id))
     .catch(() => showToast('Delete failed — try again', 'error'));
   photos = photos.filter(x => x.id !== p.id);
-  renderProgress();
+  if (photoCount != null) photoCount = Math.max(0, photoCount - 1);
+  if (firstPhoto && firstPhoto.id === p.id) {
+    firstPhoto = photosAll ? photos[photos.length - 1] || null : null;
+    if (!photosAll) loadFirstPhoto().then(renderPhotosEverywhere);
+  }
+  renderPhotosEverywhere();
+  if (document.getElementById('compareOverlay').classList.contains('open')) {
+    if (canCompare()) openCompare(); else document.getElementById('compareOverlay').classList.remove('open');
+  }
   showToast('Photo deleted', 'success');
 }
 
@@ -3296,7 +3538,7 @@ document.getElementById('btnExport').addEventListener('click', async e => {
   const btn = e.currentTarget;
   btn.disabled = true; btn.textContent = 'Preparing…';
   flushSaves();
-  await loadPhotos();
+  const gotAll = await loadAllPhotos();
   const data = {
     app: 'GymLog', exportedAt: new Date().toISOString(), unit,
     days: db,
@@ -3305,7 +3547,7 @@ document.getElementById('btnExport').addEventListener('click', async e => {
   };
   downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `gymlog-export-${dateKey(new Date())}.json`);
   btn.disabled = false; btn.textContent = 'Export My Data';
-  showToast(photosLoaded ? 'Export downloaded' : "Export downloaded — photos couldn't be loaded", photosLoaded ? 'success' : 'warn', 4000);
+  showToast(gotAll ? 'Export downloaded' : "Export downloaded — some photos couldn't be loaded", gotAll ? 'success' : 'warn', 4000);
 });
 
 // ─────────────────────────────────────────
