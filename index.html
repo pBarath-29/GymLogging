@@ -829,7 +829,6 @@
     .lib-empty.has-starters { padding: 28px 24px 20px; }
     .starter-wrap { margin-top: 24px; }
     .lib-empty + .starter-wrap { margin-top: 4px; }
-    .starter-restore { display: block; margin: 14px auto 0; }
 
     /* ── Progress: stats + strength chart ── */
     .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
@@ -2408,8 +2407,8 @@ function renderLibrary() {
     list.appendChild(card);
   });
 
-  // Ready-made routines stay listed, so several can be added; each can be hidden with its bin
-  const shown = visibleStarters(), hiddenCount = STARTER_ROUTINES.length - shown.length;
+  // Ready-made routines stay listed, so several can be added. The bin removes one for good.
+  const shown = visibleStarters();
   if (shown.length) {
     starters.appendChild(elMk('div', 'starter-label', 'Starter routines'));
     const sList = elMk('div', 'tpl-list');
@@ -2427,7 +2426,7 @@ function renderLibrary() {
       hide.addEventListener('click', () => {
         if (!confirm(`Remove the "${st.name}" starter routine?
 
-You can bring it back from the bottom of the Library.`)) return;
+This can't be undone.`)) return;
         saveProfile({ hiddenStarters: [...(profile.hiddenStarters || []), st.id] });
         renderLibrary();
       });
@@ -2436,11 +2435,6 @@ You can bring it back from the bottom of the Library.`)) return;
       sList.appendChild(card);
     });
     starters.appendChild(sList);
-  }
-  if (hiddenCount) {
-    const restore = elMk('button', 'auth-link starter-restore', `Show ${hiddenCount} hidden starter ${hiddenCount === 1 ? 'routine' : 'routines'}`);
-    restore.addEventListener('click', () => { saveProfile({ hiddenStarters: [] }); renderLibrary(); });
-    starters.appendChild(restore);
   }
 }
 
