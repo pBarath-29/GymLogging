@@ -740,7 +740,11 @@
     @media (max-width: 340px) {
       .logo { display: none; }
     }
-    .week-label.tappable { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .week-label.tappable {
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      height: clamp(30px, 8.5vw, 34px); display: flex; align-items: center; justify-content: center;
+      padding: 0 10px; background: var(--surface2); border: 1px solid #2a2a2a; border-radius: 9px; color: var(--text);
+    }
     .week-label.tappable:active { opacity: 0.6; }
     .cal-overlay {
       display: none; position: fixed; inset: 0; z-index: 850;
@@ -823,6 +827,9 @@
     }
     .tpl-card-add:active { background: rgba(249,115,22,0.2); }
     .lib-empty.has-starters { padding: 28px 24px 20px; }
+    .starter-wrap { margin-top: 24px; }
+    .lib-empty + .starter-wrap { margin-top: 4px; }
+    .starter-restore { display: block; margin: 14px auto 0; }
 
     /* ── Progress: stats + strength chart ── */
     .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
@@ -1006,7 +1013,6 @@
       <img class="user-avatar" id="userAvatar" src="" alt="account" title="Settings">
     </div>
     <div class="week-nav">
-      <button class="nav-btn" id="btnCalendar" title="Month view">📅</button>
       <button class="nav-btn" id="btnPrev">&#8249;</button>
       <span class="week-label tappable" id="weekLabel" title="Month view"></span>
       <button class="nav-btn" id="btnNext">&#8250;</button>
@@ -1058,7 +1064,7 @@
   <div class="lib-empty" id="tplEmpty">
     <div class="empty-icon">📋</div>
     <h3>No collections yet</h3>
-    <p>Tap <strong>+ New</strong> to build your own, or add a starter routine below.</p>
+    <p>Tap <strong>+ New</strong> to build your own, or add starter routines below.</p>
   </div>
   <div class="starter-wrap" id="starterWrap"></div>
 </div>
@@ -2258,7 +2264,6 @@ function goToDate(d) {
   render();
 }
 
-document.getElementById('btnCalendar').addEventListener('click', openCalendar);
 document.getElementById('weekLabel').addEventListener('click', openCalendar);
 document.getElementById('btnCloseCal').addEventListener('click', closeCalendar);
 document.getElementById('btnCalToday').addEventListener('click', () => scrollCalTo(new Date(), true));
@@ -2403,24 +2408,43 @@ function renderLibrary() {
     list.appendChild(card);
   });
 
-  // With nothing saved yet, offer ready-made routines to copy in
-  if (templates.length) return;
-  starters.appendChild(elMk('div', 'starter-label', 'Starter routines'));
-  const sList = elMk('div', 'tpl-list');
-  STARTER_ROUTINES.forEach(st => {
-    const { card } = tplCard(st, '');
-    card.style.cursor = 'default';
-    const add = elMk('button', 'tpl-card-add', '+ Add');
-    add.addEventListener('click', () => {
-      addTemplate(st.name, st.groups);
-      showToast(`Added "${st.name}"`, 'success');
-      renderLibrary();
+  // Ready-made routines stay listed, so several can be added; each can be hidden with its bin
+  const shown = visibleStarters(), hiddenCount = STARTER_ROUTINES.length - shown.length;
+  if (shown.length) {
+    starters.appendChild(elMk('div', 'starter-label', 'Starter routines'));
+    const sList = elMk('div', 'tpl-list');
+    shown.forEach(st => {
+      const { card } = tplCard(st, '');
+      card.style.cursor = 'default';
+      const add = elMk('button', 'tpl-card-add', '+ Add');
+      add.addEventListener('click', () => {
+        addTemplate(st.name, st.groups);
+        showToast(`Added "${st.name}" to your collections`, 'success');
+        renderLibrary();
+      });
+      const hide = elMk('button', 'trash-btn'); hide.title = 'Remove'; hide.setAttribute('aria-label', `Remove ${st.name}`);
+      hide.innerHTML = TRASH_SVG;
+      hide.addEventListener('click', () => {
+        if (!confirm(`Remove the "${st.name}" starter routine?
+
+You can bring it back from the bottom of the Library.`)) return;
+        saveProfile({ hiddenStarters: [...(profile.hiddenStarters || []), st.id] });
+        renderLibrary();
+      });
+      card.appendChild(add);
+      card.appendChild(hide);
+      sList.appendChild(card);
     });
-    card.appendChild(add);
-    sList.appendChild(card);
-  });
-  starters.appendChild(sList);
+    starters.appendChild(sList);
+  }
+  if (hiddenCount) {
+    const restore = elMk('button', 'auth-link starter-restore', `Show ${hiddenCount} hidden starter ${hiddenCount === 1 ? 'routine' : 'routines'}`);
+    restore.addEventListener('click', () => { saveProfile({ hiddenStarters: [] }); renderLibrary(); });
+    starters.appendChild(restore);
+  }
 }
+
+const visibleStarters = () => STARTER_ROUTINES.filter(st => !(profile.hiddenStarters || []).includes(st.id));
 
 // Outlined bin icon; the 🗑 emoji draws almost black on the dark theme
 const TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -2607,7 +2631,7 @@ function showTplPicker(dayKey) {
     });
   };
   addItems('Your collections', templates, 'collection');
-  addItems('Starter routines', STARTER_ROUTINES, 'starter');
+  addItems('Starter routines', visibleStarters(), 'starter');
   document.getElementById('tplPickerOverlay').classList.add('open');
 }
 
@@ -3207,7 +3231,7 @@ const tourKey = () => `glog_tour_done_${currentUid}`;
 const TOUR_STEPS = [
   { title: 'Welcome to GymLog 👋', text: 'Here\'s a quick 30-second tour of how everything works.' },
   { target: '#dayTabs', title: 'Your week', text: 'Tap any day to plan or log that day\'s workout. Use ‹ › up top to move between weeks.' },
-  { target: '#btnCalendar', title: 'Month view', text: 'See your whole month at a glance. Tap any date to jump straight to it.' },
+  { target: '#weekLabel', title: 'Month view', text: 'Tap the dates up here to see your whole month. Tap any day to jump straight to it.' },
   { target: '.edit-toggle', title: 'Build your workout', text: 'Tap Edit to add muscle groups, exercises and sets. Tap Done when you\'re finished.' },
   { target: '.ex-card', title: 'Log your sets', text: 'Enter weight and reps, then tap ✓ as you finish each set. Last session\'s numbers show underneath — tap them to fill the set in.' },
   { target: '#fabBtn', title: 'Rest timer', text: 'Start a countdown between sets. Your phone buzzes when it\'s time to go again.' },
