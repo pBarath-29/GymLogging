@@ -1082,7 +1082,6 @@
     <button class="back-btn" id="btnCloseTplEditor">&#8592;</button>
     <input class="tpl-name-input" id="tplNameInput" placeholder="Collection name…" maxlength="60">
     <button class="tpl-del-btn" id="btnShareTpl" title="Share collection">🔗</button>
-    <button class="trash-btn" id="btnDeleteTpl" title="Delete collection" aria-label="Delete collection"></button>
   </div>
   <div class="tpl-editor-body" id="tplEditorBody"></div>
 </div>
@@ -1659,6 +1658,21 @@ function elMk(tag, cls, text) {
 let weekStart = getMonday(new Date());
 let dayIdx    = (new Date().getDay() + 6) % 7;
 let editMode  = false;
+let editSnap  = null; // { key, day } — the day as it was when editing started, for Cancel
+
+function startEdit(key) {
+  editMode = true;
+  editSnap = { key, day: db[key] ? JSON.parse(JSON.stringify(db[key])) : null };
+}
+function endEdit() { editMode = false; editSnap = null; }
+function cancelEdit() {
+  if (editSnap) {
+    const { key, day } = editSnap;
+    if (day) db[key] = day; else delete db[key];
+    saveDB(key);
+  }
+  endEdit(); render();
+}
 let prevData  = {}; // exerciseName.toLowerCase() → sets[] from most recent past session
 
 function computePrevData() {
@@ -1864,7 +1878,7 @@ function renderTabs() {
     btn.className = `day-tab${isToday?' is-today':''}${isActive?' is-active':''}`;
     btn.innerHTML = `<span class="d-name">${DAYS[i]}</span><span class="d-num">${d.getDate()}</span>${indEl}`;
     btn.addEventListener('click', () => {
-      dayIdx = i; editMode = false; render();
+      dayIdx = i; endEdit(); render();
       btn.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
     });
     container.appendChild(btn);
@@ -1900,11 +1914,30 @@ function renderMain() {
     saveDB(key); render();
   });
 
-  const editBtn = elMk('button', `edit-toggle${editMode?' editing':''}`, editMode ? 'Done' : 'Edit');
-  editBtn.addEventListener('click', () => { editMode = !editMode; render(); });
-
   const headBtns = elMk('div', 'head-btns');
-  headBtns.appendChild(restBtn); headBtns.appendChild(editBtn);
+  if (editMode) {
+    // While editing: Cancel puts the day back the way it was, Save keeps the changes
+    const cancelBtn = elMk('button', 'edit-toggle', 'Cancel');
+    cancelBtn.addEventListener('click', cancelEdit);
+    const saveBtn = elMk('button', 'edit-toggle editing', 'Save');
+    saveBtn.addEventListener('click', () => {
+      // Keep a name that's still being typed
+      const a = document.activeElement;
+      if (a && /group-name-input|ex-name-input/.test(a.className)) a.blur();
+      endEdit(); render();
+    });
+    // Don't let the tap take focus from a name field first: that would redraw the page under the finger
+    for (const b of [cancelBtn, saveBtn]) b.addEventListener('mousedown', e => e.preventDefault());
+    headBtns.appendChild(cancelBtn); headBtns.appendChild(saveBtn);
+  } else {
+    headBtns.appendChild(restBtn);
+    // An empty day already shows "+ Add Muscle Group", so Edit only appears once there's something to edit
+    if (!isRest && day && (day.groups || []).length) {
+      const editBtn = elMk('button', 'edit-toggle', 'Edit');
+      editBtn.addEventListener('click', () => { startEdit(key); render(); });
+      headBtns.appendChild(editBtn);
+    }
+  }
   headRow.appendChild(headLeft); headRow.appendChild(headBtns);
   main.appendChild(headRow);
 
@@ -1952,7 +1985,7 @@ function renderMain() {
   if (editMode || groups.length === 0) {
     const addG = elMk('button', 'add-group-btn', '+ Add Muscle Group');
     addG.addEventListener('click', () => {
-      editMode = true;
+      if (!editMode) startEdit(key);
       ensureDay(key).groups.push({ name:'', exercises:[] });
       saveDB(key); render();
       setTimeout(() => {
@@ -2011,7 +2044,10 @@ function editGroupName(key, gi, el) {
   const inp = elMk('input', 'group-name-input');
   inp.value = db[key].groups[gi].name || ''; inp.placeholder = 'e.g. Shoulders'; inp.maxLength = 80;
   el.replaceWith(inp); inp.focus(); inp.select();
-  const commit = () => { db[key].groups[gi].name = inp.value.trim() || 'Group'; saveDB(key); render(); };
+  const commit = () => {
+    if (!editMode || !db[key] || !db[key].groups[gi]) return;
+    db[key].groups[gi].name = inp.value.trim() || 'Group'; saveDB(key); render();
+  };
   inp.addEventListener('blur', commit);
   inp.addEventListener('keydown', e => { if (e.key==='Enter') inp.blur(); if (e.key==='Escape') render(); });
 }
@@ -2152,7 +2188,10 @@ function editExName(key, gi, ei, el) {
   inp.value = db[key].groups[gi].exercises[ei].name || ''; inp.placeholder = 'Exercise name'; inp.maxLength = 80;
   refreshExNames(); inp.setAttribute('list', 'exNames'); inp.autocomplete = 'off';
   el.replaceWith(inp); inp.focus(); inp.select();
-  const commit = () => { db[key].groups[gi].exercises[ei].name = inp.value.trim() || 'Exercise'; saveDB(key); render(); };
+  const commit = () => {
+    if (!editMode || !db[key] || !db[key].groups[gi] || !db[key].groups[gi].exercises[ei]) return;
+    db[key].groups[gi].exercises[ei].name = inp.value.trim() || 'Exercise'; saveDB(key); render();
+  };
   inp.addEventListener('blur', commit);
   inp.addEventListener('keydown', e => { if (e.key==='Enter') inp.blur(); if (e.key==='Escape') render(); });
 }
@@ -2160,11 +2199,11 @@ function editExName(key, gi, ei, el) {
 // ─────────────────────────────────────────
 //  NAVIGATION
 // ─────────────────────────────────────────
-document.getElementById('btnPrev').addEventListener('click', () => { weekStart=addDays(weekStart,-7); editMode=false; render(); });
+document.getElementById('btnPrev').addEventListener('click', () => { weekStart=addDays(weekStart,-7); endEdit(); render(); });
 document.getElementById('btnNext').addEventListener('click', () => {
   const limit = addDays(getMonday(new Date()), 52 * 7);
   if (weekStart >= limit) { showToast("Can't plan more than a year ahead", 'warn'); return; }
-  weekStart=addDays(weekStart,7); editMode=false; render();
+  weekStart=addDays(weekStart,7); endEdit(); render();
 });
 
 // ─────────────────────────────────────────
@@ -2265,7 +2304,7 @@ document.getElementById('calScroll').addEventListener('scroll', () => {
 function goToDate(d) {
   weekStart = getMonday(d);
   dayIdx = (d.getDay() + 6) % 7;
-  editMode = false;
+  endEdit();
   closeCalendar();
   switchTab('workout');
   render();
@@ -2453,7 +2492,6 @@ const visibleStarters = () => STARTER_ROUTINES.filter(st => !(profile.hiddenStar
 // Outlined bin icon; the 🗑 emoji draws almost black on the dark theme
 const TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg>';
-document.getElementById('btnDeleteTpl').innerHTML = TRASH_SVG;
 
 const tplGroupNames = tpl => (tpl.groups || []).map(g => g.name).filter(Boolean).join(' · ');
 
@@ -2756,7 +2794,6 @@ document.getElementById('btnCloseTplEditor').addEventListener('click', () => {
   closeTplEditor();
   renderLibrary();
 });
-document.getElementById('btnDeleteTpl').addEventListener('click', () => deleteTpl(activeTplId));
 document.getElementById('tplNameInput').addEventListener('input', e => {
   const tpl = templates.find(t => t.id === activeTplId);
   if (tpl) { tpl.name = e.target.value; saveTpl(activeTplId); }
@@ -3236,7 +3273,7 @@ const TOUR_STEPS = [
   { title: 'Welcome to GymLog 👋', text: 'Here\'s a quick 30-second tour of how everything works.' },
   { target: '#dayTabs', title: 'Your week', text: 'Tap any day to plan or log that day\'s workout. Use ‹ › up top to move between weeks.' },
   { target: '#weekLabel', title: 'Month view', text: 'Tap the dates up here to see your whole month. Tap any day to jump straight to it.' },
-  { target: '.edit-toggle', title: 'Build your workout', text: 'Tap Edit to add muscle groups, exercises and sets. Tap Done when you\'re finished.' },
+  { target: '.edit-toggle', title: 'Build your workout', text: 'Tap Edit to add muscle groups, exercises and sets, then Save. Cancel undoes your changes.' },
   { target: '.ex-card', title: 'Log your sets', text: 'Enter weight and reps, then tap ✓ as you finish each set. Last session\'s numbers show underneath — tap them to fill the set in.' },
   { target: '#fabBtn', title: 'Rest timer', text: 'Start a countdown between sets. Your phone buzzes when it\'s time to go again.' },
   { target: '#bnavLibrary', title: 'Collections', text: 'Save routines you repeat and apply them to any day in one tap. Starter routines are ready to use, and you can share yours by link.' },
@@ -3279,7 +3316,7 @@ function startTour() {
   flushSaves();   // nothing may be waiting to save while the sample day below is in memory
   weekStart = getMonday(new Date());
   dayIdx = (new Date().getDay() + 6) % 7;
-  editMode = false;
+  endEdit();
 
   // Show a sample exercise on today if there's nothing to point at. It lives only in memory:
   // the tour blocks every tap, so it can't be saved, and it's removed when the tour ends.
