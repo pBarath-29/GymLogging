@@ -2887,7 +2887,7 @@ function renderChart() {
   list.forEach(([id, h]) => { const o = elMk('option', '', h.name); o.value = id; o.selected = id === chartEx; sel.appendChild(o); });
 
   const pts = exHist.get(chartEx).sessions;
-  const best = pts.reduce((a, b) => b.weight > a.weight ? b : a), last = pts[pts.length - 1];
+  const best = pts.reduce((a, b) => b.weight > a.weight || (b.weight === a.weight && b.reps > a.reps) ? b : a), last = pts[pts.length - 1];
   body.appendChild(elMk('div', 'chart-sub', `Heaviest set per session · best ${fmtNum(best.weight)} ${unit} × ${best.reps}`));
 
   // Scale: clean ticks around the data, time on x
