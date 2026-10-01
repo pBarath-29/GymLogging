@@ -828,6 +828,14 @@
     .tpl-card-add:active { background: rgba(249,115,22,0.2); }
     .lib-empty.has-starters { padding: 28px 24px 20px; }
     .starter-wrap { margin-top: 24px; }
+    .starter-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .starter-head .starter-label { margin-bottom: 0; }
+    .starter-clear {
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; border-radius: 20px;
+      padding: 6px 14px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .starter-clear:active { background: rgba(239,68,68,0.18); }
     .lib-empty + .starter-wrap { margin-top: 4px; }
 
     /* ── Progress: stats + strength chart ── */
@@ -2407,10 +2415,19 @@ function renderLibrary() {
     list.appendChild(card);
   });
 
-  // Ready-made routines stay listed, so several can be added. The bin removes one for good.
+  // Ready-made routines: adding one moves it into your collections; "Remove all" clears the rest for good
   const shown = visibleStarters();
   if (shown.length) {
-    starters.appendChild(elMk('div', 'starter-label', 'Starter routines'));
+    const head = elMk('div', 'starter-head');
+    head.appendChild(elMk('div', 'starter-label', 'Starter routines'));
+    const clear = elMk('button', 'starter-clear', 'Remove all');
+    clear.addEventListener('click', () => {
+      if (!confirm("Remove all starter routines?\n\nOnes you've already added stay in your collections. This can't be undone.")) return;
+      hideStarters(shown.map(st => st.id));
+      renderLibrary();
+    });
+    head.appendChild(clear);
+    starters.appendChild(head);
     const sList = elMk('div', 'tpl-list');
     shown.forEach(st => {
       const { card } = tplCard(st, '');
@@ -2418,26 +2435,19 @@ function renderLibrary() {
       const add = elMk('button', 'tpl-card-add', '+ Add');
       add.addEventListener('click', () => {
         addTemplate(st.name, st.groups);
+        hideStarters([st.id]);
         showToast(`Added "${st.name}" to your collections`, 'success');
         renderLibrary();
       });
-      const hide = elMk('button', 'trash-btn'); hide.title = 'Remove'; hide.setAttribute('aria-label', `Remove ${st.name}`);
-      hide.innerHTML = TRASH_SVG;
-      hide.addEventListener('click', () => {
-        if (!confirm(`Remove the "${st.name}" starter routine?
-
-This can't be undone.`)) return;
-        saveProfile({ hiddenStarters: [...(profile.hiddenStarters || []), st.id] });
-        renderLibrary();
-      });
       card.appendChild(add);
-      card.appendChild(hide);
       sList.appendChild(card);
     });
     starters.appendChild(sList);
   }
 }
 
+// Starters that were added or removed never show again (stored on the account)
+const hideStarters = ids => saveProfile({ hiddenStarters: [...new Set([...(profile.hiddenStarters || []), ...ids])] });
 const visibleStarters = () => STARTER_ROUTINES.filter(st => !(profile.hiddenStarters || []).includes(st.id));
 
 // Outlined bin icon; the 🗑 emoji draws almost black on the dark theme
