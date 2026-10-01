@@ -1,6 +1,6 @@
 // GymLog service worker — lets the app open with no signal.
 // Bump CACHE when the list of precached files changes.
-const CACHE = 'gymlog-v1';
+const CACHE = 'gymlog-v2';
 const FIREBASE = 'https://www.gstatic.com/firebasejs/';
 
 const SHELL = [
@@ -9,6 +9,7 @@ const SHELL = [
   'icon-192.png',
   'icon-512.png',
   'apple-touch-icon.png',
+  'fonts/anton.woff2',
 ];
 // Must match the versions imported in index.html
 const FIREBASE_MODULES = [

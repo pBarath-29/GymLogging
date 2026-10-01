@@ -12,7 +12,8 @@ A few things that make it useful in practice:
 - Starter routines (Push, Pull, Legs, Upper, Lower, Full Body) can be applied to any day in one tap. You can also save your own routines as collections, and share a collection with someone by link.
 - If you do the same routine every week, you can copy last week's workout for that day in one tap.
 - Exercise names are suggested as you type, from your own history and a list of common lifts.
-- When a set beats your previous best for that exercise it is marked as a PR. Finishing every set of the day opens a summary you can share as an image.
+- When a set beats your previous best for that exercise it is marked as a PR. Finishing every set of the day opens a summary.
+- Any trained day can be shared as an image (Share workout): Dark, Orange, Photo (your own photo behind the stats, kept on the device) or Sticker (transparent, for placing over a story), in Story (9:16) or Square format.
 - Bodyweight exercises (no weight entered, e.g. pull-ups) count by reps for PRs, charts and summaries.
 - Muscle groups and exercises can be reordered with up/down arrows while editing a day or a collection.
 - The Progress tab shows workouts this week, your weekly streak, a strength chart per exercise (3M / 6M / 1Y / All), a body weight log with its own chart, and your latest progress photos. The Photos page shows every photo grouped by month, loads them 12 at a time, and lets you compare any two side by side.
@@ -27,6 +28,7 @@ A few things that make it useful in practice:
 - Firestore for storing workout data and progress photos (photos are stored as base64-encoded JPEG directly in Firestore documents). Firestore's persistent local cache keeps a copy on the device for offline use.
 - Firebase Analytics for a small set of usage events.
 - A service worker (`sw.js`) that caches the app shell and the Firebase modules.
+- Anton (SIL Open Font License, `fonts/OFL.txt`) for the share images, served from this site.
 - Hosted on Render as a static site.
 
 ## Firebase setup
