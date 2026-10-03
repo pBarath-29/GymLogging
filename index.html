@@ -1497,6 +1497,20 @@ const SHARE_KEY = 'glog_pending_share';
   }
 }
 
+// App shortcuts (long-press the app icon) open /?tab=progress or /?tab=library
+let startTab = null;
+{
+  const t = new URLSearchParams(location.search).get('tab');
+  if (t === 'progress' || t === 'library') {
+    startTab = t;
+    history.replaceState(null, '', location.pathname);
+  }
+}
+
+// Running as the Android app (Trusted Web Activity) or an installed home-screen app
+const runningAsApp = document.referrer.startsWith('android-app://')
+  || window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
 // ─────────────────────────────────────────
 //  AUTH
 // ─────────────────────────────────────────
@@ -1669,7 +1683,8 @@ onAuthStateChanged(auth, async (user) => {
 
     hide('loadingScreen');
     show('appRoot');
-    switchTab('workout');
+    switchTab(startTab || 'workout');
+    startTab = null;
     syncUnitSeg();
     render();
     if (!await maybeStartTour()) maybeImportShared();
@@ -3967,7 +3982,7 @@ window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); instal
 window.addEventListener('appinstalled', () => { installEvent = null; closeInstallHint(); track('install_prompt', { outcome: 'installed' }); });
 
 function maybeShowInstallHint() {
-  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  const standalone = runningAsApp;   // already an app: nothing to install
   let seen = false;
   try { seen = !!localStorage.getItem(INSTALL_KEY); } catch (_) {}
   if (standalone || seen || tour) return;

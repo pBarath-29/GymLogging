@@ -44,6 +44,17 @@ These are set in the Firebase console, not in this repo:
 
 If you change the Firebase version in `index.html`, change it in `sw.js` too and bump `CACHE` there.
 
+## Android app (Google Play)
+
+The Android app is a Trusted Web Activity: a small native package that opens https://gymlog-7z5j.onrender.com/ full screen in Chrome. It runs this same site, so **every deploy to Render updates the app too**. A new Play release is only needed to change the app's name, icon, package or signing.
+
+- **Package:** generated with [PWABuilder](https://www.pwabuilder.com/) (Android). Package ID: `com.gymlog.app` (whatever was chosen there; it can't be changed after the first upload).
+- **Signing key:** PWABuilder produces a `.keystore` file and passwords. Keep them **outside this repo** and backed up. Losing them means the app can't be updated.
+- **Digital Asset Links:** `.well-known/assetlinks.json` proves the site and the app belong together. Without it the app shows a browser address bar. It must list the package ID and the SHA-256 fingerprints of **both** the upload key (from PWABuilder) and the app-signing key (Play Console > Setup > App signing). Check it at `https://gymlog-7z5j.onrender.com/.well-known/assetlinks.json`.
+- **Don't change** `id` or `start_url` in `manifest.json`, or move the site to another domain, without updating the Android package and assetlinks.
+- **Store listing:** text, form answers and images are in `store/` (`store/listing.md`).
+- App shortcuts (long-press the icon) open `/?tab=progress` and `/?tab=library`.
+
 ## Data structure
 
 ```
