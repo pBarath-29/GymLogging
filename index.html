@@ -5,23 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="GymLog">
+  <meta name="apple-mobile-web-app-title" content="LastMark">
   <meta name="theme-color" content="#0f0f0f">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
-  <title>GymLog — track your lifts, know what to beat</title>
+  <title>LastMark — track your lifts, know what to beat</title>
   <meta name="description" content="A free workout log that shows what you lifted last time, so you always know what to beat. One-tap routines, personal records and strength charts. Works offline and syncs across your devices.">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="GymLog">
-  <meta property="og:title" content="GymLog — know what to beat, every set">
+  <meta property="og:site_name" content="LastMark">
+  <meta property="og:title" content="LastMark — know what to beat, every set">
   <meta property="og:description" content="A free workout log with one-tap routines, personal records and strength charts. Works offline.">
   <meta property="og:url" content="https://gymlog-7z5j.onrender.com/">
   <meta property="og:image" content="https://gymlog-7z5j.onrender.com/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="GymLog — know what to beat, every set">
+  <meta name="twitter:title" content="LastMark — know what to beat, every set">
   <meta name="twitter:description" content="A free workout log with one-tap routines, personal records and strength charts. Works offline.">
   <meta name="twitter:image" content="https://gymlog-7z5j.onrender.com/og.png">
   <style>
@@ -1057,7 +1057,7 @@
 <!-- ── Auth Screen ── -->
 <div class="auth-screen" id="authScreen">
   <div class="auth-inner">
-  <div class="auth-logo">GymLog</div>
+  <div class="auth-logo">LastMark</div>
   <h1 class="auth-headline">Know what to beat,<br>every set.</h1>
   <p class="auth-tagline" id="authTagline">A free workout log that remembers your last session for you.</p>
 
@@ -1119,7 +1119,7 @@
 
   <header>
     <div class="header-left">
-      <span class="logo">GymLog</span>
+      <span class="logo">LastMark</span>
       <img class="user-avatar" id="userAvatar" src="" alt="account" title="Settings">
     </div>
     <div class="week-nav">
@@ -1423,7 +1423,7 @@
 <!-- ── Install Hint ── -->
 <div class="install-hint" id="installHint">
   <button class="install-x" id="btnInstallX" aria-label="Dismiss">✕</button>
-  <h4>Put GymLog on your home screen</h4>
+  <h4>Put LastMark on your home screen</h4>
   <p id="installText"></p>
   <button class="install-go" id="btnInstallGo">Install</button>
 </div>
@@ -1610,7 +1610,7 @@ document.getElementById('btnCloseSettings').addEventListener('click', () => {
 
 // Sign out
 document.getElementById('btnSignOut').addEventListener('click', async () => {
-  if (!confirm('Sign out of GymLog?')) return;
+  if (!confirm('Sign out of LastMark?')) return;
   hide('settingsOverlay');
   flushSaves();
   await signOut(auth);
@@ -2847,7 +2847,7 @@ async function shareTpl(id) {
   track('collection_shared');
   const url = `${location.origin}/?c=${sid}`;
   if (navigator.share) {
-    try { await navigator.share({ title: `${name} — GymLog`, text: `Here's my "${name}" routine on GymLog`, url }); return; }
+    try { await navigator.share({ title: `${name} — LastMark`, text: `Here's my "${name}" routine on LastMark`, url }); return; }
     catch (e) { if (e.name === 'AbortError') return; }
   }
   try { await navigator.clipboard.writeText(url); showToast('Link copied', 'success'); }
@@ -3742,7 +3742,7 @@ function drawStudio(c, data, style, format, photo) {
 
   // ── header: wordmark + date
   const top = P + 52;
-  text('GYMLOG', P, top, anton(54), accent, 'left', 3);
+  text('LASTMARK', P, top, anton(54), accent, 'left', 3);
   text(`${data.weekday.toUpperCase()}  ·  ${data.shortDate.toUpperCase()}`, W - P, top - 4, sans(26, 700), muted, 'right', 2);
 
   // ── blocks are stacked from the bottom up so the photo (or glow) stays visible at the top
@@ -3752,7 +3752,7 @@ function drawStudio(c, data, style, format, photo) {
   const { lifts, more } = data.share;
   let y = H - P;
   if (story) {
-    const left = data.streak >= 2 ? `${data.streak}-WEEK STREAK` : 'TRAINED WITH GYMLOG';
+    const left = data.streak >= 2 ? `${data.streak}-WEEK STREAK` : 'TRAINED WITH LASTMARK';
     text(left, P, y, sans(26, 800), muted, 'left', 3);
     text(location.host, W - P, y, sans(24, 600), muted, 'right');
     y -= 76;
@@ -3871,7 +3871,7 @@ function renderStudio() {
   document.getElementById('studioHint').textContent = {
     dark: 'Ready for your story or feed.',
     orange: 'Ready for your story or feed.',
-    photo: studio.photo ? 'Your photo stays on this phone — it isn’t uploaded to GymLog.' : '',
+    photo: studio.photo ? 'Your photo stays on this phone — it isn’t uploaded to LastMark.' : '',
   }[studio.style];
   try { localStorage.setItem('glog_share_style', JSON.stringify({ style: studio.style, format: studio.format })); } catch (_) {}
 }
@@ -3921,7 +3921,7 @@ document.getElementById('btnStudioShare').addEventListener('click', async () => 
   let blob;
   try { blob = canvasPng(document.getElementById('studioCanvas')); }
   catch (_) { showToast("Couldn't create the image", 'error'); return; }
-  const file = new File([blob], `gymlog-${studio.key}-${studio.style}.png`, { type: 'image/png' });
+  const file = new File([blob], `lastmark-${studio.key}-${studio.style}.png`, { type: 'image/png' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try { await navigator.share({ files: [file] }); return; }
     catch (e) { if (e.name === 'AbortError') return; }
@@ -4028,13 +4028,13 @@ document.getElementById('btnExport').addEventListener('click', async e => {
   flushSaves();
   const gotAll = await loadAllPhotos();
   const data = {
-    app: 'GymLog', exportedAt: new Date().toISOString(), unit,
+    app: 'LastMark', exportedAt: new Date().toISOString(), unit,
     days: db,
     collections: templates.map(({ id, ...t }) => t),
     photos: photos.map(({ id, ...p }) => p),
     bodyWeight: (await loadBody(), bodyLog),
   };
-  downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `gymlog-export-${dateKey(new Date())}.json`);
+  downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `lastmark-export-${dateKey(new Date())}.json`);
   btn.disabled = false; btn.textContent = 'Export My Data';
   showToast(gotAll ? 'Export downloaded' : "Export downloaded — some photos couldn't be loaded", gotAll ? 'success' : 'warn', 4000);
 });
@@ -4044,7 +4044,7 @@ document.getElementById('btnExport').addEventListener('click', async e => {
 // ─────────────────────────────────────────
 const tourKey = () => `glog_tour_done_${currentUid}`;
 const TOUR_STEPS = [
-  { page: 'workout', title: 'Welcome to GymLog 👋',
+  { page: 'workout', title: 'Welcome to LastMark 👋',
     text: 'This tour shows you each part of the app, page by page. It takes about a minute. Use Next and Back to move through it.' },
   { page: 'workout', target: '#dayTabs', title: 'Your week',
     text: 'Each day has its own workout. Tap a day to plan or log it, and use ‹ › at the top to move between weeks. A dot means that day has exercises.' },
@@ -4063,7 +4063,7 @@ const TOUR_STEPS = [
   { page: 'library', target: '#starterWrap .starter-head', title: 'Starter routines',
     text: 'Ready-made routines to get you going. + Add moves one into your collections, and Remove all clears the ones you don’t need.' },
   { page: 'library', target: '#tplList .tpl-card', title: 'Edit and share',
-    text: 'Tap a collection to edit it. The 🔗 button inside creates a link, so a friend can add your routine to their own GymLog.' },
+    text: 'Tap a collection to edit it. The 🔗 button inside creates a link, so a friend can add your routine to their own LastMark.' },
   { page: 'progress', target: '#statRow', title: 'Stay consistent',
     text: 'Workouts this week, how many weeks in a row you’ve trained, and your total. Any week with a completed workout keeps the streak going.' },
   { page: 'progress', target: ['#chartBody .chart-plot', '#progressView .chart-card'], title: 'Strength chart',

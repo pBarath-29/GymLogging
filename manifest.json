@@ -1,6 +1,6 @@
 {
-  "name": "GymLog",
-  "short_name": "GymLog",
+  "name": "LastMark",
+  "short_name": "LastMark",
   "description": "Track your lifts and know what to beat, every set. Works offline and syncs across your devices.",
   "id": "/",
   "start_url": "/",

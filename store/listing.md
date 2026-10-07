@@ -1,4 +1,4 @@
-# Google Play listing: GymLog
+# Google Play listing: LastMark
 
 Everything to paste into Play Console. The images are in this folder:
 - `icon-512.png`: app icon (512×512)
@@ -10,14 +10,14 @@ Everything to paste into Play Console. The images are in this folder:
 ## Main store listing
 
 **App name** (max 30 characters)
-GymLog: Workout Tracker
+LastMark: Gym Workout Log
 
 **Short description** (max 80 characters)
 Log your lifts, beat last time, and share workouts. Free and works offline.
 
 **Full description** (max 4000 characters)
 
-GymLog is a simple, fast workout log for people who lift. Plan your week, log every set, and always know what to beat.
+LastMark is a simple, fast workout log for people who lift. Plan your week, log every set, and always know what to beat.
 
 KNOW WHAT TO BEAT
 • Last session's weight and reps show under every set. Tap them to fill the set in.
@@ -51,7 +51,7 @@ YOUR DATA IS YOURS
 • Export all your workouts, routines, photos and body weight as a file at any time.
 • Delete your account and all your data from Settings.
 
-GymLog is a record-keeping tool and does not provide medical or fitness advice.
+LastMark is a record-keeping tool and does not provide medical or fitness advice.
 
 **App category:** Health & Fitness
 **Tags:** Workout tracker, Gym, Fitness tracker
@@ -99,7 +99,7 @@ Expected rating: Everyone / PEGI 3.
 **Is all of the user data collected by your app encrypted in transit?** Yes (HTTPS/TLS)
 **Do you provide a way for users to request that their data is deleted?** Yes, in the app (Settings > Delete Account) and by email.
 
-Data **shared** with third parties: **None.** Google (Firebase) and Render process data on GymLog's behalf as service providers, which Play does not count as sharing.
+Data **shared** with third parties: **None.** Google (Firebase) and Render process data on LastMark's behalf as service providers, which Play does not count as sharing.
 
 Data **collected**:
 
@@ -123,4 +123,4 @@ Notes:
 ---
 
 ## Release notes (first release)
-First release of GymLog on Google Play: log your workouts, track PRs and progress, and share your sessions.
+First release of LastMark on Google Play: log your workouts, track PRs and progress, and share your sessions.

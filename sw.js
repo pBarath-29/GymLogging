@@ -1,6 +1,6 @@
-// GymLog service worker — lets the app open with no signal.
+// LastMark service worker — lets the app open with no signal.
 // Bump CACHE when the list of precached files changes.
-const CACHE = 'gymlog-v2';
+const CACHE = 'lastmark-v3';
 const FIREBASE = 'https://www.gstatic.com/firebasejs/';
 
 const SHELL = [
